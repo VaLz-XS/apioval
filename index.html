@@ -81,7 +81,11 @@ button:disabled{opacity:.6}
 .meta{display:flex;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin-bottom:12px}
 video,.out img{width:100%;border:2.5px solid var(--ink);border-radius:12px;background:#fff;max-height:60vh;margin-top:12px;object-fit:contain}
 video{background:#000}
+audio{width:100%;margin-top:12px}
 .out p{margin:10px 0;word-break:break-word}
+.imgs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.imgs a{display:block;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;box-shadow:2px 2px 0 var(--ink)}
+.imgs img{display:block;width:100%;height:150px;margin:0;border:0;border-radius:0;object-fit:cover}
 .ex{font-family:'JetBrains Mono',monospace;font-size:10.5px;background:#f4f1e4;border:1.5px solid var(--ink);border-radius:8px;padding:8px;word-break:break-all;margin:0 0 10px}
 
 .win{border:2.5px solid var(--ink);border-radius:14px;overflow:hidden;background:#fff;margin-top:12px;box-shadow:3px 3px 0 var(--ink)}
@@ -145,7 +149,7 @@ footer svg{vertical-align:-2px}
     <section class="card" data-view="home">
       <h1>Apioval</h1>
       <div class="sub">API simpel buat bot lu</div>
-      <p>Kumpulan endpoint buat bot WhatsApp: downloader TikTok, brat sticker, dan lainnya. Bikin API key sendiri, langsung pakai.</p>
+      <p>Kumpulan endpoint buat bot WhatsApp: downloader TikTok (video, foto, MP3), brat sticker, dan lainnya. Bikin API key sendiri, langsung pakai.</p>
       <div class="grid3">
         <div class="box b1"><small>Limit</small><b>100 / hari</b></div>
         <div class="box b2"><small>Biaya</small><b>Gratis</b></div>
@@ -194,15 +198,20 @@ footer svg{vertical-align:-2px}
         <div class="wbody">
           <p>Parameter: <b>url</b>, <b>apikey</b> (atau header <b>x-api-key</b>)</p>
           <pre>/api/tiktok?url=LINK_TIKTOK&amp;apikey=ov_xxx</pre>
+          <p>Response video:</p>
           <pre>{
   "ok": true,
+  "type": "video",
   "title": "...",
+  "author": "...",
   "video": "https://...",
-  "music": "https://...",
+  "images": [],
+  "music": "https://... (mp3)",
   "plan": "free",
   "limit": 100,
   "remaining": 99
 }</pre>
+          <p>Response foto (slideshow): <b>type</b> = "image", <b>video</b> kosong, <b>images</b> berisi daftar link foto.</p>
         </div>
       </div>
 
@@ -235,7 +244,7 @@ footer svg{vertical-align:-2px}
 400  parameter kosong
 429  limit harian habis
 500  gagal membuat gambar
-502  gagal ambil video</pre></div>
+502  gagal ambil data</pre></div>
       </div>
     </section>
 
@@ -334,14 +343,15 @@ $('btnForget').onclick = () => {
 /* ===== daftar endpoint (tambah endpoint baru cukup tambah di sini) ===== */
 const EPS = [
   { id:'tiktok', name:'TikTok Downloader', method:'GET', path:'/api/tiktok', param:'url',
-    desc:'Download video TikTok tanpa watermark.', ph:'Link TikTok...', type:'video',
+    desc:'Download video, foto (slideshow), dan audio MP3 dari TikTok tanpa watermark.', ph:'Link TikTok...',
     sample:'/api/tiktok?url=LINK_TIKTOK&apikey=KEY' },
   { id:'brat', name:'Brat Sticker', method:'GET', path:'/api/brat', param:'text',
-    desc:'Bikin gambar brat 512x512 (background putih, teks hitam). Tambah format=webp buat stiker WA.', ph:'Teks brat...', type:'image',
+    desc:'Bikin gambar brat 512x512 (background putih, teks hitam). Tambah format=webp buat stiker WA.', ph:'Teks brat...',
     sample:'/api/brat?text=halo+dunia&apikey=KEY' }
 ];
 
 function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
+function link(label, href, cls){ const a = el('a','btn' + (cls ? ' ' + cls : ''), label); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; }
 
 function buildEps(){
   const box = $('epList'); box.innerHTML = '';
@@ -378,12 +388,33 @@ function buildEps(){
         } else {
           const d = await r.json();
           if(!d.ok) throw new Error(d.error || 'Gagal');
-          const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
-          const rw = el('div','row');
-          const a1 = el('a','btn','Buka Video'); a1.href = d.video; a1.target = '_blank'; a1.rel = 'noopener';
-          const a2 = el('a','btn w','Buka Audio'); a2.href = d.music; a2.target = '_blank'; a2.rel = 'noopener';
-          rw.append(a1, a2);
-          out.append(vd, el('p','',d.title || ''), rw);
+
+          if(d.title) out.append(el('p','',d.title));
+
+          if(d.type === 'image' && d.images && d.images.length){
+            const g = el('div','imgs');
+            d.images.forEach((src, i) => {
+              const a = el('a'); a.href = src; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Foto ' + (i + 1);
+              const im = el('img'); im.src = src; im.loading = 'lazy'; im.alt = 'Foto ' + (i + 1);
+              a.appendChild(im); g.appendChild(a);
+            });
+            out.append(g);
+            out.append(el('p','','Ketuk foto buat buka ukuran penuh, lalu tahan buat simpan. Total: ' + d.images.length + ' foto.'));
+          } else if(d.video){
+            const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
+            out.append(vd);
+            const rv = el('div','row'); rv.style.marginTop = '10px';
+            rv.append(link('Buka Video', d.video));
+            out.append(rv);
+          }
+
+          if(d.music){
+            const au = el('audio'); au.controls = true; au.src = d.music;
+            out.append(au);
+            const ra = el('div','row'); ra.style.marginTop = '10px';
+            ra.append(link('Buka MP3', d.music, 'w'));
+            out.append(ra);
+          }
           msg(m,'Berhasil.' + (d.remaining >= 0 ? ' Sisa limit: ' + d.remaining : ''));
         }
         out.classList.remove('hide');
