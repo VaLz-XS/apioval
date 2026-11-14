@@ -15,6 +15,30 @@ body{margin:0;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;
 code,pre,.tag,.chip,small,button,.btn,input{font-family:'JetBrains Mono',ui-monospace,monospace}
 .hide{display:none!important}
 
+/* ===== LOADING SCREEN ===== */
+#loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;background:#0a5aa8 linear-gradient(#27a9ec 0,#1286d6 30%,#0a5aa8 65%,#073a78 100%);transition:opacity .5s,visibility .5s;animation:ldAuto .3s 9s forwards}
+#loader.done{opacity:0;visibility:hidden}
+@keyframes ldAuto{to{opacity:0;visibility:hidden}}
+.ld-sand{position:absolute;top:0;left:0;right:0;height:150px;background:var(--sand)}
+.ld-sand::after{content:"";position:absolute;left:0;right:0;bottom:-29px;height:30px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0H80V10C70 20 50 20 40 10C30 0 10 0 0 10Z' fill='%23eed79c'/%3E%3C/svg%3E") repeat-x;background-size:80px 30px}
+.ld-card{position:relative;z-index:2;width:min(86%,340px);background:var(--cream);border:3px solid var(--ink);border-radius:20px;box-shadow:5px 5px 0 var(--ink);padding:22px 18px 18px;text-align:center}
+.ld-tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border:2px solid var(--ink);border-radius:8px;background:var(--yel);box-shadow:2px 2px 0 var(--ink);margin-bottom:12px}
+.ld-logo{font-size:32px;font-weight:700;line-height:1}
+.ld-logo span{color:var(--blue)}
+.ld-track{position:relative;margin:28px 0 12px}
+.ld-bar{height:22px;border:2.5px solid var(--ink);border-radius:99px;background:#fff;overflow:hidden;box-shadow:inset 2px 2px 0 rgba(0,0,0,.08)}
+.ld-fill{height:100%;width:0;background:repeating-linear-gradient(45deg,var(--yel) 0 8px,#ffc800 8px 16px);background-size:22.63px 22.63px;animation:ldStripe .7s linear infinite;transition:width .25s ease}
+@keyframes ldStripe{to{background-position:22.63px 0}}
+.ld-fish{position:absolute;top:50%;left:0;width:34px;margin-top:-10px;transition:left .25s ease}
+.ld-fish svg{display:block;animation:ldBob .9s ease-in-out infinite}
+@keyframes ldBob{50%{transform:translateY(-4px) rotate(-5deg)}}
+.ld-info{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--blue)}
+.ld-dots::after{content:'';animation:ldDots 1.2s steps(1) infinite}
+@keyframes ldDots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+#loader .bub{z-index:1}
+@media (prefers-reduced-motion:reduce){.ld-fill,.ld-fish svg,.ld-dots::after{animation:none}}
+
+/* ===== LAYOUT ===== */
 .page{position:relative;overflow:hidden;min-height:100vh}
 .sandbg{position:absolute;top:0;left:0;right:0;height:210px;background:var(--sand);z-index:0}
 .sandbg::after{content:"";position:absolute;left:0;right:0;bottom:-29px;height:30px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0H80V10C70 20 50 20 40 10C30 0 10 0 0 10Z' fill='%23eed79c'/%3E%3C/svg%3E") repeat-x;background-size:80px 30px}
@@ -102,6 +126,69 @@ footer svg{vertical-align:-2px}
 </style>
 </head>
 <body>
+
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="ld-sand"></div>
+  <div class="ld-card">
+    <span class="ld-tag">01 // REST API</span>
+    <div class="ld-logo">Api<span>oval</span></div>
+    <div class="ld-track">
+      <div class="ld-bar"><div class="ld-fill" id="ldfill"></div></div>
+      <div class="ld-fish" id="ldfish">
+        <svg viewBox="0 0 48 28" width="34" height="20"><path d="M10 14C18 2 36 2 44 14 36 26 18 26 10 14z" fill="#ff9f1c" stroke="#0b1b33" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 14L2 6v16z" fill="#ff9f1c" stroke="#0b1b33" stroke-width="2.5" stroke-linejoin="round"/><circle cx="36" cy="11" r="2" fill="#0b1b33"/></svg>
+      </div>
+    </div>
+    <div class="ld-info"><span><span id="ldtxt">Memuat</span><span class="ld-dots"></span></span><span id="ldpct">0%</span></div>
+  </div>
+</div>
+<script>
+(function(){
+  var L = document.getElementById('loader');
+  var fill = document.getElementById('ldfill');
+  var fish = document.getElementById('ldfish');
+  var txt = document.getElementById('ldtxt');
+  var pc = document.getElementById('ldpct');
+  var p = 0, loaded = document.readyState === 'complete', start = Date.now();
+  var MIN_MS = 1300;
+
+  for (var i = 0; i < 8; i++) {
+    var s = document.createElement('span');
+    s.className = 'bub';
+    var z = 6 + Math.random() * 14;
+    s.style.cssText = 'width:' + z + 'px;height:' + z + 'px;left:' + (Math.random() * 100) + '%;animation-duration:' + (6 + Math.random() * 6) + 's;animation-delay:' + (-Math.random() * 8) + 's';
+    L.appendChild(s);
+  }
+
+  function set(v) {
+    if (!loaded && v > 90) v = 90;
+    p = Math.max(p, Math.min(100, v));
+    fill.style.width = p + '%';
+    fish.style.left = 'calc((100% - 34px) * ' + (p / 100) + ')';
+    pc.textContent = Math.round(p) + '%';
+    txt.textContent = p >= 100 ? 'Siap' : p >= 70 ? 'Hampir selesai' : p >= 35 ? 'Menyiapkan endpoint' : 'Memuat';
+  }
+  function close() {
+    L.classList.add('done');
+    setTimeout(function () { if (L.parentNode) L.parentNode.removeChild(L); }, 700);
+  }
+
+  var iv = setInterval(function () {
+    if (!loaded) {
+      set(p + Math.max(0.4, (90 - p) * 0.05));
+    } else if (Date.now() - start >= MIN_MS) {
+      clearInterval(iv);
+      set(100);
+      setTimeout(close, 400);
+    } else {
+      set(p + 4);
+    }
+  }, 120);
+
+  window.addEventListener('load', function () { loaded = true; });
+  setTimeout(function () { loaded = true; }, 8000);
+})();
+</script>
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer">
