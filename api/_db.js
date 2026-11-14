@@ -28,3 +28,26 @@ export async function getKey(key) {
   const raw = await redis('GET', 'apikey:' + key);
   return raw ? JSON.parse(raw) : null;
 }
+  export async function useQuota(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const apikey = String(req.query.apikey || req.headers['x-api-key'] || '').trim();
+  if (!apikey) { res.status(401).json({ ok: false, error: 'API key wajib (?apikey=...)' }); return null; }
+  const info = await getKey(apikey);
+  if (!info) { res.status(401).json({ ok: false, error: 'API key tidak valid' }); return null; }
+  const limit = PLANS[info.plan] ?? 100;
+  const ukey = 'usage:' + apikey + ':' + today();
+  let used = 0;
+  if (limit !== -1) {
+    used = await redis('INCR', ukey);
+    if (used === 1) await redis('EXPIRE', ukey, 172800);
+    if (used > limit) {
+      res.status(429).json({ ok: false, error: 'Limit harian habis', limit, used: limit, remaining: 0 });
+      return null;
+    }
+  }
+  return { apikey, info, limit, used, ukey, remaining: limit === -1 ? -1 : Math.max(limit - used, 0) };
+}
+
+export async function refund(q) {
+  if (q && q.limit !== -1) await redis('DECR', q.ukey);
+}
