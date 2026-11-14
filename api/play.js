@@ -13,14 +13,14 @@ export default async function handler(req, res) {
         }
         const video = search.videos[0]
 
-        // 2. Download MP3
+        // 2. Download MP3 (biar dapet link audio)
         const mp3 = await ytScraper.ytmp3(video.url)
 
         if (!mp3.status || !mp3.download || !mp3.download.url) {
             return res.status(502).json({ ok: false, error: 'Gagal ambil audio' })
         }
 
-        // 3. Balikin JSON
+        // 3. Balikin JSON (LENGKAP: ada video & audio)
         return res.status(200).json({
             ok: true,
             title: video.title,
@@ -28,7 +28,8 @@ export default async function handler(req, res) {
             duration: video.duration.timestamp,
             views: video.views,
             thumbnail: video.thumbnail,
-            audio: mp3.download.url
+            video: video.url,          // <--- Link YouTube
+            music: mp3.download.url    // <--- Link MP3
         })
 
     } catch (e) {
