@@ -1,44 +1,46 @@
-// api/play.js
-import axios from 'axios'
+import { useQuota, refund } from './_db.js';
 
 export default async function handler(req, res) {
-    // Cek API Key
-    const { q, apikey } = req.query
-    if (!apikey) {
-        return res.status(401).json({ ok: false, error: 'API key kosong' })
+  const q = String(req.query.q || '').trim();
+  if (!q) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(400).json({ ok: false, error: 'q kosong' });
+  }
+
+  // Cek kuota (sama kayak tiktok.js)
+  const quota = await useQuota(req, res);
+  if (!quota) return;
+
+  try {
+    // Tembak API YouTube (pake nexoracle)
+    const apiUrl = `https://api.nexoracle.com/search/youtube?apikey=free&q=${encodeURIComponent(q)}`;
+    const r = await fetch(apiUrl);
+    const j = await r.json();
+
+    if (!j.result || !Array.isArray(j.result) || j.result.length === 0) {
+      await refund(quota);
+      return res.status(502).json({ ok: false, error: 'Lagu tidak ditemukan' });
     }
-    if (!q) {
-        return res.status(400).json({ ok: false, error: 'Query kosong' })
-    }
 
-    try {
-        // Tembak API YouTube (pake nexoracle)
-        const apiUrl = `https://api.nexoracle.com/search/youtube?apikey=free&q=${encodeURIComponent(q)}`
-        const { data } = await axios.get(apiUrl, { timeout: 15000 })
+    // Ambil hasil pertama
+    const first = j.result[0];
 
-        if (!data.result || data.result.length === 0) {
-            return res.status(502).json({ ok: false, error: 'Lagu tidak ditemukan' })
-        }
+    // Balikin JSON (sama struktur kayak tiktok.js)
+    res.json({
+      ok: true,
+      title: first.title || '',
+      author: first.author || '',
+      video: `https://youtube.com/watch?v=${first.videoId}`,
+      thumbnail: first.thumbnail || '',
+      duration: first.duration || '',
+      views: first.views || '',
+      plan: quota.info.plan,
+      limit: quota.limit,
+      remaining: quota.remaining
+    });
 
-        // Ambil hasil pertama
-        const first = data.result[0]
-
-        // Balikin JSON
-        return res.status(200).json({
-            ok: true,
-            title: first.title,
-            author: first.author,
-            thumbnail: first.thumbnail,
-            url: `https://youtube.com/watch?v=${first.videoId}`,
-            duration: first.duration,
-            views: first.views,
-            plan: 'free',
-            limit: 100,
-            remaining: 99 // Nanti lu bisa itung sendiri
-        })
-
-    } catch (e) {
-        console.error('[PLAY ERROR]', e.message)
-        return res.status(500).json({ ok: false, error: 'Gagal ambil data dari YouTube' })
-    }
+  } catch (e) {
+    await refund(quota);
+    res.status(500).json({ ok: false, error: e.message });
+  }
 }
