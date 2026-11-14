@@ -3,107 +3,256 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Apioval - TikTok Downloader</title>
+<title>Apioval - REST API</title>
 <style>
-  :root{--bg:#0b0b0f;--card:#15151c;--line:#26262f;--txt:#f2f2f5;--mut:#8b8b99;--acc:#25f4ee;--acc2:#fe2c55}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;min-height:100vh}
-  .wrap{max-width:560px;margin:0 auto;padding:24px 16px 48px}
-  h1{font-size:26px;margin:8px 0 4px}
-  h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
-  p.sub{color:var(--mut);margin:0 0 20px;font-size:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
-  input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#0f0f14;color:var(--txt);font-size:15px;outline:none}
-  input:focus{border-color:var(--acc)}
-  .row{display:flex;gap:8px;margin-top:10px}
-  button,a.btn{flex:1;padding:12px;border:0;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;color:#000;background:var(--acc)}
-  button.sec,a.btn.sec{background:#23232d;color:var(--txt)}
-  button:disabled{opacity:.5}
-  #status{margin-top:12px;font-size:14px;color:var(--mut);min-height:18px}
-  #status.err{color:var(--acc2)}
-  video{width:100%;border-radius:10px;background:#000;max-height:60vh}
-  #title{font-size:14px;margin:12px 0;word-break:break-word}
-  .hide{display:none}
-  code{background:#0f0f14;border:1px solid var(--line);padding:3px 6px;border-radius:6px;font-size:12px;word-break:break-all}
-  h2{font-size:15px;margin:0 0 10px}
-  .doc p{font-size:13px;color:var(--mut);margin:8px 0}
-  footer{text-align:center;color:var(--mut);font-size:12px;margin-top:24px}
+:root{--bg:#09090d;--card:#13131a;--line:#24242e;--txt:#f1f1f5;--mut:#8a8a9a;--a:#25f4ee;--b:#fe2c55}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,sans-serif;line-height:1.5}
+header{position:sticky;top:0;z-index:5;background:rgba(9,9,13,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav{max-width:720px;margin:0 auto;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:800;font-size:18px}
+.logo span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav div a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:14px}
+.nav div a:hover{color:var(--txt)}
+main{max-width:720px;margin:0 auto;padding:0 16px 48px}
+.hero{padding:44px 0 28px;text-align:center}
+.pill{display:inline-block;font-size:12px;color:var(--a);border:1px solid #1d5b59;background:#0c2423;padding:4px 12px;border-radius:99px;margin-bottom:14px}
+.hero h1{font-size:34px;line-height:1.15;margin:0 0 10px}
+.hero p{color:var(--mut);margin:0 auto 20px;max-width:440px}
+.stats{display:flex;gap:8px;margin-bottom:8px}
+.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:20px}
+.stat small{color:var(--mut)}
+section{margin-top:28px}
+h2{font-size:20px;margin:0 0 4px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0c0c11;color:var(--txt);font-size:15px;outline:none;margin-bottom:10px}
+input:focus{border-color:var(--a)}
+.row{display:flex;gap:8px}
+button,.btn{flex:1;padding:12px;border:0;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#000;background:var(--a);text-align:center;text-decoration:none;display:inline-block}
+button.sec,.btn.sec{background:#22222c;color:var(--txt)}
+button:disabled{opacity:.5}
+.msg{font-size:13px;color:var(--mut);margin-top:10px;min-height:18px}
+.msg.err{color:var(--b)}
+.keybox{display:none;margin-top:14px}
+.keyval{font-family:ui-monospace,monospace;font-size:13px;background:#0c0c11;border:1px dashed #2f6b69;border-radius:10px;padding:12px;word-break:break-all;color:var(--a)}
+.bar{height:8px;background:#0c0c11;border-radius:99px;overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .4s}
+.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+video{width:100%;border-radius:10px;background:#000;max-height:60vh;margin-top:12px}
+.ep{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--card)}
+.m{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:#0c2423;color:var(--a);margin-right:6px}
+.m.p{background:#2a1119;color:var(--b)}
+code,pre{font-family:ui-monospace,monospace;font-size:12px}
+pre{background:#0c0c11;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;margin:8px 0 0;color:#cfd0dc}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:24px 0}
+.hide{display:none}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Api<span>oval</span></h1>
-  <p class="sub">Download video TikTok tanpa watermark</p>
+<header><div class="nav">
+  <div class="logo">Api<span>oval</span></div>
+  <div><a href="#key">API Key</a><a href="#try">Coba</a><a href="#docs">Docs</a></div>
+</div></header>
 
-  <div class="card">
-    <input id="url" type="url" placeholder="Tempel link TikTok di sini..." autocomplete="off">
-    <div class="row">
-      <button class="sec" id="paste">Paste</button>
-      <button id="go">Ambil Video</button>
+<main>
+  <div class="hero">
+    <span class="pill">REST API • Gratis</span>
+    <h1>API simpel buat<br>bot lu</h1>
+    <p>Ambil video TikTok tanpa watermark lewat satu endpoint. Bikin API key sendiri, langsung pakai.</p>
+    <div class="stats">
+      <div class="stat"><b>100</b><small>Request / hari</small></div>
+      <div class="stat"><b>Gratis</b><small>Tanpa daftar</small></div>
+      <div class="stat"><b>JSON</b><small>Response</small></div>
     </div>
-    <div id="status"></div>
   </div>
 
-  <div class="card hide" id="result">
-    <video id="vid" controls playsinline referrerpolicy="no-referrer"></video>
-    <div id="title"></div>
-    <div class="row">
-      <a class="btn" id="dlVideo" target="_blank" rel="noopener" referrerpolicy="no-referrer">Buka Video</a>
-      <a class="btn sec" id="dlMusic" target="_blank" rel="noopener" referrerpolicy="no-referrer">Buka Audio</a>
+  <section id="key">
+    <h2>API Key</h2>
+    <p class="sub">Buat key gratis, limit 100 request per hari (reset 00:00 WIB).</p>
+    <div class="card">
+      <div id="make">
+        <input id="name" maxlength="30" placeholder="Nama (opsional)">
+        <button id="btnMake">Buat API Key</button>
+      </div>
+      <div class="keybox" id="keybox">
+        <div class="keyval" id="keyval"></div>
+        <div class="bar"><i id="barfill"></i></div>
+        <div class="meta"><span id="usedtxt">-</span><span id="plantxt">-</span></div>
+        <div class="row" style="margin-top:12px">
+          <button class="sec" id="btnCopy">Copy</button>
+          <button class="sec" id="btnRefresh">Cek Pemakaian</button>
+          <button class="sec" id="btnForget">Hapus</button>
+        </div>
+      </div>
+      <div class="msg" id="keymsg"></div>
     </div>
-    <p style="font-size:12px;color:var(--mut);margin:10px 0 0">Kalau video kebuka di tab baru, tahan layar lalu pilih "Download video".</p>
-  </div>
+  </section>
 
-  <div class="card doc">
-    <h2>Dokumentasi API</h2>
-    <p>Endpoint:</p>
-    <code>GET /api/tiktok?url=LINK_TIKTOK</code>
-    <p>Contoh response:</p>
-    <code>{"ok":true,"title":"...","video":"https://...","music":"https://..."}</code>
-    <p>Contoh di bot:</p>
-    <code>fetch("https://apioval.vercel.app/api/tiktok?url=" + encodeURIComponent(url))</code>
-  </div>
+  <section id="try">
+    <h2>Coba Langsung</h2>
+    <p class="sub">Pakai API key lu di atas.</p>
+    <div class="card">
+      <input id="url" type="url" placeholder="Link TikTok...">
+      <div class="row">
+        <button class="sec" id="btnPaste">Paste</button>
+        <button id="btnGo">Ambil Video</button>
+      </div>
+      <div class="msg" id="trymsg"></div>
+      <div id="result" class="hide">
+        <video id="vid" controls playsinline></video>
+        <p id="ttl" style="font-size:14px;word-break:break-word"></p>
+        <div class="row">
+          <a class="btn" id="dlv" target="_blank" rel="noopener">Buka Video</a>
+          <a class="btn sec" id="dla" target="_blank" rel="noopener">Buka Audio</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <footer>Apioval &copy; <span id="yr"></span></footer>
-</div>
+  <section id="docs">
+    <h2>Dokumentasi</h2>
+    <p class="sub">Semua endpoint pakai method GET kecuali register.</p>
+
+    <div class="ep">
+      <span class="m">GET</span><code>/api/tiktok</code>
+      <p class="sub" style="margin:6px 0 0">Parameter: <code>url</code>, <code>apikey</code> (atau header <code>x-api-key</code>)</p>
+      <pre>/api/tiktok?url=LINK_TIKTOK&amp;apikey=ov_xxx</pre>
+      <pre>{
+  "ok": true,
+  "title": "...",
+  "video": "https://...",
+  "music": "https://...",
+  "plan": "free",
+  "limit": 100,
+  "remaining": 99
+}</pre>
+    </div>
+
+    <div class="ep">
+      <span class="m">GET</span><code>/api/usage</code>
+      <pre>/api/usage?apikey=ov_xxx</pre>
+    </div>
+
+    <div class="ep">
+      <span class="m p">POST</span><code>/api/register</code>
+      <p class="sub" style="margin:6px 0 0">Body JSON: <code>{"name":"opsional"}</code>. Maks 3 key per hari per IP.</p>
+    </div>
+
+    <div class="ep">
+      <b style="font-size:14px">Contoh di bot (Node.js)</b>
+      <pre>const r = await fetch(
+  `https://apioval.vercel.app/api/tiktok?url=${encodeURIComponent(link)}&amp;apikey=KEY_LU`
+);
+const d = await r.json();
+if (d.ok) { /* kirim d.video */ }
+else { /* d.error */ }</pre>
+    </div>
+
+    <div class="ep">
+      <b style="font-size:14px">Kode error</b>
+      <pre>401  API key kosong / tidak valid
+400  parameter url kosong
+429  limit harian habis
+502  gagal ambil video</pre>
+    </div>
+  </section>
+</main>
+<footer>Apioval &copy; <span id="yr"></span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
 $('yr').textContent = new Date().getFullYear();
+const LS = 'apioval_key';
+function getK(){ try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } }
+function setK(v){ try{ v ? localStorage.setItem(LS, v) : localStorage.removeItem(LS); }catch(e){} }
+function msg(id, t, err){ const e=$(id); e.textContent=t; e.className='msg'+(err?' err':''); }
 
-function setStatus(msg, err){ const s=$('status'); s.textContent=msg; s.className=err?'err':''; }
+function showKey(k){
+  if(!k){ $('make').style.display='block'; $('keybox').style.display='none'; return; }
+  $('make').style.display='none';
+  $('keybox').style.display='block';
+  $('keyval').textContent = k;
+  refresh();
+}
 
-$('paste').onclick = async () => {
-  try { $('url').value = await navigator.clipboard.readText(); }
-  catch { setStatus('Gagal baca clipboard, tempel manual aja.', true); }
+async function refresh(){
+  const k = getK(); if(!k) return;
+  try{
+    const r = await fetch('/api/usage?apikey=' + encodeURIComponent(k));
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error);
+    if(d.limit === -1){
+      $('usedtxt').textContent = 'Terpakai hari ini: ' + d.used + ' (tanpa batas)';
+      $('barfill').style.width = '100%';
+    } else {
+      $('usedtxt').textContent = d.used + ' / ' + d.limit + ' terpakai hari ini';
+      $('barfill').style.width = Math.min(100, d.used / d.limit * 100) + '%';
+    }
+    $('plantxt').textContent = 'Plan: ' + d.plan;
+    msg('keymsg','');
+  }catch(e){ msg('keymsg', e.message, true); }
+}
+
+$('btnMake').onclick = async () => {
+  $('btnMake').disabled = true;
+  msg('keymsg','Membuat key...');
+  try{
+    const r = await fetch('/api/register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name: $('name').value.trim() })
+    });
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error || 'Gagal membuat key');
+    setK(d.apikey);
+    showKey(d.apikey);
+    msg('keymsg','Key dibuat. Simpan baik-baik.');
+  }catch(e){ msg('keymsg', e.message, true); }
+  $('btnMake').disabled = false;
 };
 
-async function run(){
-  const url = $('url').value.trim();
-  if(!url){ setStatus('Isi link TikTok dulu.', true); return; }
-  $('go').disabled = true;
+$('btnCopy').onclick = async () => {
+  try{ await navigator.clipboard.writeText(getK()); msg('keymsg','Tersalin.'); }
+  catch(e){ msg('keymsg','Gagal copy, salin manual.', true); }
+};
+$('btnRefresh').onclick = refresh;
+$('btnForget').onclick = () => {
+  if(confirm('Hapus key dari browser ini? Pastikan sudah disimpan.')){ setK(''); showKey(''); }
+};
+
+$('btnPaste').onclick = async () => {
+  try{ $('url').value = await navigator.clipboard.readText(); }
+  catch(e){ msg('trymsg','Gagal baca clipboard.', true); }
+};
+
+async function go(){
+  const k = getK(), u = $('url').value.trim();
+  if(!k){ msg('trymsg','Buat API key dulu di atas.', true); return; }
+  if(!u){ msg('trymsg','Isi link TikTok dulu.', true); return; }
+  $('btnGo').disabled = true;
   $('result').classList.add('hide');
-  setStatus('Lagi ngambil video...');
+  msg('trymsg','Lagi ngambil video...');
   try{
-    const r = await fetch('/api/tiktok?url=' + encodeURIComponent(url));
+    const r = await fetch('/api/tiktok?url=' + encodeURIComponent(u) + '&apikey=' + encodeURIComponent(k));
     const d = await r.json();
-    if(!d.ok) throw new Error(d.error || 'Gagal ambil video');
-    const video = (d.video||'').trim();
-    const music = (d.music||'').trim();
-    $('vid').src = video;
-    $('title').textContent = d.title || '';
-    $('dlVideo').href = video;
-    $('dlMusic').href = music;
+    if(!d.ok) throw new Error(d.error || 'Gagal');
+    $('vid').src = d.video;
+    $('ttl').textContent = d.title || '';
+    $('dlv').href = d.video;
+    $('dla').href = d.music;
     $('result').classList.remove('hide');
-    setStatus('Berhasil.');
-  }catch(e){
-    setStatus(e.message, true);
-  }finally{
-    $('go').disabled = false;
-  }
+    msg('trymsg','Berhasil.' + (d.remaining >= 0 ? ' Sisa limit hari ini: ' + d.remaining : ''));
+    refresh();
+  }catch(e){ msg('trymsg', e.message, true); }
+  $('btnGo').disabled = false;
 }
-$('go').onclick = run;
-$('url').addEventListener('keydown', e => { if(e.key==='Enter') run(); });
+$('btnGo').onclick = go;
+$('url').addEventListener('keydown', e => { if(e.key === 'Enter') go(); });
+
+showKey(getK());
 </script>
 </body>
 </html>
