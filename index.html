@@ -4,123 +4,174 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Apioval - REST API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#09090d;--card:#13131a;--line:#24242e;--txt:#f1f1f5;--mut:#8a8a9a;--a:#25f4ee;--b:#fe2c55}
+:root{--ink:#0b1b33;--cream:#fffdf4;--blue:#0a74b8;--yel:#ffdf3d;--sand:#eed79c}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,sans-serif;line-height:1.5}
-header{position:sticky;top:0;z-index:5;background:rgba(9,9,13,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.nav{max-width:720px;margin:0 auto;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-.logo{font-weight:800;font-size:18px}
-.logo span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
-.nav div a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:14px}
-.nav div a:hover{color:var(--txt)}
-main{max-width:720px;margin:0 auto;padding:0 16px 48px}
-.hero{padding:44px 0 28px;text-align:center}
-.pill{display:inline-block;font-size:12px;color:var(--a);border:1px solid #1d5b59;background:#0c2423;padding:4px 12px;border-radius:99px;margin-bottom:14px}
-.hero h1{font-size:34px;line-height:1.15;margin:0 0 10px}
-.hero p{color:var(--mut);margin:0 auto 20px;max-width:440px}
-.stats{display:flex;gap:8px;margin-bottom:8px}
-.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
-.stat b{display:block;font-size:20px}
-.stat small{color:var(--mut)}
-section{margin-top:28px}
-h2{font-size:20px;margin:0 0 4px}
-.sub{color:var(--mut);font-size:14px;margin:0 0 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0c0c11;color:var(--txt);font-size:15px;outline:none;margin-bottom:10px}
-input:focus{border-color:var(--a)}
-.row{display:flex;gap:8px}
-button,.btn{flex:1;padding:12px;border:0;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#000;background:var(--a);text-align:center;text-decoration:none;display:inline-block}
-button.sec,.btn.sec{background:#22222c;color:var(--txt)}
-button:disabled{opacity:.5}
-.msg{font-size:13px;color:var(--mut);margin-top:10px;min-height:18px}
-.msg.err{color:var(--b)}
-.keybox{display:none;margin-top:14px}
-.keyval{font-family:ui-monospace,monospace;font-size:13px;background:#0c0c11;border:1px dashed #2f6b69;border-radius:10px;padding:12px;word-break:break-all;color:var(--a)}
-.bar{height:8px;background:#0c0c11;border-radius:99px;overflow:hidden;margin:12px 0 6px}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .4s}
-.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
-video{width:100%;border-radius:10px;background:#000;max-height:60vh;margin-top:12px}
-.ep{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--card)}
-.m{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:#0c2423;color:var(--a);margin-right:6px}
-.m.p{background:#2a1119;color:var(--b)}
-code,pre{font-family:ui-monospace,monospace;font-size:12px}
-pre{background:#0c0c11;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;margin:8px 0 0;color:#cfd0dc}
-footer{text-align:center;color:var(--mut);font-size:12px;padding:24px 0}
+body{margin:0;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;background:#0a5aa8 linear-gradient(#27a9ec 0,#1286d6 30%,#0a5aa8 65%,#073a78 100%);min-height:100vh}
+.mono,code,pre,.tag,.chip,.links a,small,button,.btn,input{font-family:'JetBrains Mono',ui-monospace,monospace}
+
+.page{position:relative;overflow:hidden;min-height:100vh}
+.sandbg{position:absolute;top:0;left:0;right:0;height:210px;background:var(--sand);z-index:0}
+.sandbg::after{content:"";position:absolute;left:0;right:0;bottom:-29px;height:30px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0H80V10C70 20 50 20 40 10C30 0 10 0 0 10Z' fill='%23eed79c'/%3E%3C/svg%3E") repeat-x;background-size:80px 30px}
+#bubbles,.fishes{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.bub{position:absolute;bottom:-30px;border-radius:50%;background:rgba(255,255,255,.45);border:1.5px solid rgba(255,255,255,.85);animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-115vh)}}
+.fish{position:absolute;font-size:26px;animation:swim 24s linear infinite}
+@keyframes swim{from{transform:translateX(-60px)}to{transform:translateX(115vw)}}
+@media (prefers-reduced-motion:reduce){.bub,.fish{animation:none}}
+
+.col{position:relative;z-index:2;max-width:640px;margin:0 auto;padding-bottom:30px}
+
+.nav{position:sticky;top:8px;z-index:20;margin:8px 12px 0;display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0f5d8c;border:2.5px solid var(--ink);border-radius:18px;box-shadow:3px 3px 0 var(--ink);color:#fff}
+.brand{font-weight:700;font-size:15px;white-space:nowrap}
+.brand small{display:block;font-size:9px;color:#9fd2f2;font-weight:500}
+.links{display:flex;gap:4px;margin-left:auto;background:#1a7ab0;border:2px solid #0b3f63;border-radius:99px;padding:3px}
+.links a{color:#cfe9fb;text-decoration:none;font-size:11px;font-weight:700;padding:6px 11px;border-radius:99px;white-space:nowrap}
+.links a.on,.links a:hover{background:#0a8cf0;color:#fff;box-shadow:0 0 0 2px #fff inset}
+
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:14px 12px 0}
+.tag{font-size:11px;font-weight:700;padding:5px 10px;border:2px solid var(--ink);border-radius:8px;background:#fff;box-shadow:2px 2px 0 var(--ink)}
+.tag.y{background:var(--yel)}
+.spacer{height:105px}
+
+.card{background:var(--cream);border:3px solid var(--ink);border-radius:20px;box-shadow:5px 5px 0 var(--ink);padding:18px;margin:0 12px 22px}
+.card h1,.card h2{margin:0;font-size:25px;font-weight:700;line-height:1.15}
+.sub{font-family:'JetBrains Mono',monospace;color:var(--blue);font-size:12px;font-weight:700;margin:5px 0 12px}
+.card p{font-size:13px;line-height:1.55;margin:0 0 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.box{border:2.5px solid var(--ink);border-radius:12px;padding:8px 4px;box-shadow:3px 3px 0 var(--ink);text-align:center}
+.box small{display:block;font-size:9px;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+.box b{font-size:16px}
+.b1{background:#dff0ff}.b2{background:#fff3b0}.b3{background:#d9f8e6}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:10px;border:1.5px solid var(--ink);border-radius:99px;padding:2px 10px;background:#fff}
+
+input{width:100%;padding:12px;border:2.5px solid var(--ink);border-radius:10px;background:#fff;font-size:13px;color:var(--ink);outline:none;margin-bottom:10px;box-shadow:inset 2px 2px 0 rgba(0,0,0,.08)}
+input:focus{background:#fffbe0}
+button,.btn{font-size:12px;font-weight:700;padding:11px 14px;border:2.5px solid var(--ink);border-radius:10px;background:var(--blue);color:#fff;cursor:pointer;box-shadow:3px 3px 0 var(--ink);text-decoration:none;display:inline-block;text-align:center;transition:transform .08s,box-shadow .08s}
+button:active,.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+button.y,.btn.y{background:var(--yel);color:var(--ink)}
+button.w,.btn.w{background:#fff;color:var(--ink)}
+button:disabled{opacity:.6}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:90px}
+.full{width:100%}
+.msg{font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:10px;min-height:16px;color:#3b5878}
+.msg.err{color:#d3002b;font-weight:700}
+
+.keybox{display:none;margin-top:4px}
+.keyval{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#fff;border:2.5px dashed var(--ink);border-radius:10px;padding:12px;word-break:break-all}
+.bar{height:16px;background:#fff;border:2.5px solid var(--ink);border-radius:99px;overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--yel) 0 8px,#ffc800 8px 16px);transition:width .4s}
+.meta{display:flex;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin-bottom:12px}
+video{width:100%;border:2.5px solid var(--ink);border-radius:12px;background:#000;max-height:60vh;margin-top:12px}
+#ttl{margin:10px 0;word-break:break-word}
 .hide{display:none}
+
+.win{border:2.5px solid var(--ink);border-radius:14px;overflow:hidden;background:#fff;margin-top:12px;box-shadow:3px 3px 0 var(--ink)}
+.wbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#fbefc8;border-bottom:2.5px solid var(--ink)}
+.dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--ink);flex:none}
+.dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+.addr{margin-left:6px;font-size:10px;font-weight:700;background:#fff;border:1.5px solid var(--ink);border-radius:6px;padding:2px 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}
+.wbody{padding:12px;font-size:11.5px;line-height:1.55;overflow:auto}
+.wbody pre{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;background:#f4f1e4;border:1.5px solid var(--ink);border-radius:8px;padding:8px}
+.wbody p{margin:0 0 4px;font-size:12px}
+
+footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px 0 20px;text-shadow:1px 1px 0 var(--ink)}
 </style>
 </head>
 <body>
-<header><div class="nav">
-  <div class="logo">Api<span>oval</span></div>
-  <div><a href="#key">API Key</a><a href="#try">Coba</a><a href="#docs">Docs</a></div>
-</div></header>
-
-<main>
-  <div class="hero">
-    <span class="pill">REST API • Gratis</span>
-    <h1>API simpel buat<br>bot lu</h1>
-    <p>Ambil video TikTok tanpa watermark lewat satu endpoint. Bikin API key sendiri, langsung pakai.</p>
-    <div class="stats">
-      <div class="stat"><b>100</b><small>Request / hari</small></div>
-      <div class="stat"><b>Gratis</b><small>Tanpa daftar</small></div>
-      <div class="stat"><b>JSON</b><small>Response</small></div>
-    </div>
+<div class="page">
+  <div class="sandbg"></div>
+  <div id="bubbles"></div>
+  <div class="fishes">
+    <span class="fish" style="top:38%">🐠</span>
+    <span class="fish" style="top:72%;animation-delay:-11s;animation-duration:30s">🐟</span>
   </div>
 
-  <section id="key">
-    <h2>API Key</h2>
-    <p class="sub">Buat key gratis, limit 100 request per hari (reset 00:00 WIB).</p>
-    <div class="card">
+  <div class="col">
+    <nav class="nav">
+      <div class="brand">Apioval<small>&gt;_ REST API</small></div>
+      <div class="links">
+        <a href="#key" class="on">Key</a>
+        <a href="#try">Coba</a>
+        <a href="#docs">Docs</a>
+      </div>
+    </nav>
+
+    <div class="tags">
+      <span class="tag y">01 // REST API</span>
+      <span class="tag">TikTok Downloader</span>
+    </div>
+    <div class="spacer"></div>
+
+    <section class="card" id="top">
+      <h1>Apioval</h1>
+      <div class="sub">API simpel buat bot lu</div>
+      <p>Ambil video TikTok tanpa watermark lewat satu endpoint. Bikin API key sendiri, langsung pakai di bot.</p>
+      <div class="grid3">
+        <div class="box b1"><small>Limit</small><b>100 / hari</b></div>
+        <div class="box b2"><small>Biaya</small><b>Gratis</b></div>
+        <div class="box b3"><small>Format</small><b>JSON</b></div>
+      </div>
+      <div class="chips">
+        <span class="chip">REST</span><span class="chip">Node.js</span><span class="chip">Vercel</span><span class="chip">Tanpa Watermark</span>
+      </div>
+    </section>
+
+    <section class="card" id="key">
+      <h2>API Key</h2>
+      <div class="sub">Reset tiap 00:00 WIB</div>
       <div id="make">
         <input id="name" maxlength="30" placeholder="Nama (opsional)">
-        <button id="btnMake">Buat API Key</button>
+        <button id="btnMake" class="full">Buat API Key</button>
       </div>
       <div class="keybox" id="keybox">
         <div class="keyval" id="keyval"></div>
         <div class="bar"><i id="barfill"></i></div>
         <div class="meta"><span id="usedtxt">-</span><span id="plantxt">-</span></div>
-        <div class="row" style="margin-top:12px">
-          <button class="sec" id="btnCopy">Copy</button>
-          <button class="sec" id="btnRefresh">Cek Pemakaian</button>
-          <button class="sec" id="btnForget">Hapus</button>
+        <div class="row">
+          <button class="w" id="btnCopy">Copy</button>
+          <button class="y" id="btnRefresh">Cek Limit</button>
+          <button class="w" id="btnForget">Hapus</button>
         </div>
       </div>
       <div class="msg" id="keymsg"></div>
-    </div>
-  </section>
+    </section>
 
-  <section id="try">
-    <h2>Coba Langsung</h2>
-    <p class="sub">Pakai API key lu di atas.</p>
-    <div class="card">
-      <input id="url" type="url" placeholder="Link TikTok...">
+    <section class="card" id="try">
+      <h2>Coba Langsung</h2>
+      <div class="sub">Pakai API key di atas</div>
+      <input id="url" type="url" placeholder="Tempel link TikTok...">
       <div class="row">
-        <button class="sec" id="btnPaste">Paste</button>
-        <button id="btnGo">Ambil Video</button>
+        <button class="w" id="btnPaste">Paste</button>
+        <button class="y" id="btnGo">Ambil Video</button>
       </div>
       <div class="msg" id="trymsg"></div>
       <div id="result" class="hide">
         <video id="vid" controls playsinline></video>
-        <p id="ttl" style="font-size:14px;word-break:break-word"></p>
+        <p id="ttl"></p>
         <div class="row">
           <a class="btn" id="dlv" target="_blank" rel="noopener">Buka Video</a>
-          <a class="btn sec" id="dla" target="_blank" rel="noopener">Buka Audio</a>
+          <a class="btn w" id="dla" target="_blank" rel="noopener">Buka Audio</a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="docs">
-    <h2>Dokumentasi</h2>
-    <p class="sub">Semua endpoint pakai method GET kecuali register.</p>
+    <section class="card" id="docs">
+      <h2>Dokumentasi</h2>
+      <div class="sub">Semua endpoint pakai GET kecuali register</div>
 
-    <div class="ep">
-      <span class="m">GET</span><code>/api/tiktok</code>
-      <p class="sub" style="margin:6px 0 0">Parameter: <code>url</code>, <code>apikey</code> (atau header <code>x-api-key</code>)</p>
-      <pre>/api/tiktok?url=LINK_TIKTOK&amp;apikey=ov_xxx</pre>
-      <pre>{
+      <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">GET /api/tiktok</span></div>
+        <div class="wbody">
+          <p>Parameter: <b>url</b>, <b>apikey</b> (atau header <b>x-api-key</b>)</p>
+          <pre>/api/tiktok?url=LINK_TIKTOK&amp;apikey=ov_xxx</pre>
+          <pre>{
   "ok": true,
   "title": "...",
   "video": "https://...",
@@ -129,42 +180,66 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:24px 0}
   "limit": 100,
   "remaining": 99
 }</pre>
-    </div>
+        </div>
+      </div>
 
-    <div class="ep">
-      <span class="m">GET</span><code>/api/usage</code>
-      <pre>/api/usage?apikey=ov_xxx</pre>
-    </div>
+      <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">GET /api/usage</span></div>
+        <div class="wbody"><pre>/api/usage?apikey=ov_xxx</pre></div>
+      </div>
 
-    <div class="ep">
-      <span class="m p">POST</span><code>/api/register</code>
-      <p class="sub" style="margin:6px 0 0">Body JSON: <code>{"name":"opsional"}</code>. Maks 3 key per hari per IP.</p>
-    </div>
+      <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">POST /api/register</span></div>
+        <div class="wbody">
+          <p>Body JSON, maks 3 key per hari per IP.</p>
+          <pre>{"name":"opsional"}</pre>
+        </div>
+      </div>
 
-    <div class="ep">
-      <b style="font-size:14px">Contoh di bot (Node.js)</b>
-      <pre>const r = await fetch(
+      <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">bot.js</span></div>
+        <div class="wbody"><pre>const r = await fetch(
   `https://apioval.vercel.app/api/tiktok?url=${encodeURIComponent(link)}&amp;apikey=KEY_LU`
 );
 const d = await r.json();
 if (d.ok) { /* kirim d.video */ }
-else { /* d.error */ }</pre>
-    </div>
+else { /* d.error */ }</pre></div>
+      </div>
 
-    <div class="ep">
-      <b style="font-size:14px">Kode error</b>
-      <pre>401  API key kosong / tidak valid
+      <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">kode error</span></div>
+        <div class="wbody"><pre>401  API key kosong / tidak valid
 400  parameter url kosong
 429  limit harian habis
-502  gagal ambil video</pre>
-    </div>
-  </section>
-</main>
-<footer>Apioval &copy; <span id="yr"></span></footer>
+502  gagal ambil video</pre></div>
+      </div>
+    </section>
+
+    <footer>Apioval &copy; <span id="yr"></span> 🫧</footer>
+  </div>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
 $('yr').textContent = new Date().getFullYear();
+
+// gelembung
+(function(){
+  const bw = $('bubbles');
+  for(let i=0;i<12;i++){
+    const s = document.createElement('span');
+    s.className = 'bub';
+    const z = 6 + Math.random()*14;
+    s.style.cssText = 'width:'+z+'px;height:'+z+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(8+Math.random()*10)+'s;animation-delay:'+(-Math.random()*12)+'s';
+    bw.appendChild(s);
+  }
+})();
+
+document.querySelectorAll('.links a').forEach(a => a.addEventListener('click', () => {
+  document.querySelectorAll('.links a').forEach(x => x.classList.remove('on'));
+  a.classList.add('on');
+}));
+
 const LS = 'apioval_key';
 function getK(){ try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } }
 function setK(v){ try{ v ? localStorage.setItem(LS, v) : localStorage.removeItem(LS); }catch(e){} }
@@ -185,10 +260,10 @@ async function refresh(){
     const d = await r.json();
     if(!d.ok) throw new Error(d.error);
     if(d.limit === -1){
-      $('usedtxt').textContent = 'Terpakai hari ini: ' + d.used + ' (tanpa batas)';
+      $('usedtxt').textContent = 'Hari ini: ' + d.used + ' (tanpa batas)';
       $('barfill').style.width = '100%';
     } else {
-      $('usedtxt').textContent = d.used + ' / ' + d.limit + ' terpakai hari ini';
+      $('usedtxt').textContent = d.used + ' / ' + d.limit + ' terpakai';
       $('barfill').style.width = Math.min(100, d.used / d.limit * 100) + '%';
     }
     $('plantxt').textContent = 'Plan: ' + d.plan;
