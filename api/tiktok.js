@@ -1,45 +1,42 @@
-import { redis, PLANS, today, getKey } from './_db.js';
+import { useQuota, refund } from './_db.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  const url = req.query.url;
-  const apikey = String(req.query.apikey || req.headers['x-api-key'] || '').trim();
+  const url = String(req.query.url || '').trim();
+  if (!url) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(400).json({ ok: false, error: 'url kosong' });
+  }
 
-  if (!apikey) return res.status(401).json({ ok: false, error: 'API key wajib (?apikey=...)' });
-  if (!url) return res.status(400).json({ ok: false, error: 'url kosong' });
+  const q = await useQuota(req, res);
+  if (!q) return;
 
   try {
-    const info = await getKey(apikey);
-    if (!info) return res.status(401).json({ ok: false, error: 'API key tidak valid' });
-
-    const limit = PLANS[info.plan] ?? 100;
-    const ukey = 'usage:' + apikey + ':' + today();
-    let used = 0;
-    if (limit !== -1) {
-      used = await redis('INCR', ukey);
-      if (used === 1) await redis('EXPIRE', ukey, 172800);
-      if (used > limit) {
-        return res.status(429).json({ ok: false, error: 'Limit harian habis', limit, used: limit, remaining: 0 });
-      }
-    }
-
     const r = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(url));
     const j = await r.json();
-    if (!j.data) {
-      if (limit !== -1) await redis('DECR', ukey); // gagal = limit dikembaliin
-      return res.status(502).json({ ok: false, error: 'Gagal ambil video' });
+    const d = j && j.data;
+    if (!d) {
+      await refund(q);
+      return res.status(502).json({ ok: false, error: 'Gagal ambil data, cek link-nya' });
     }
+
+    const images = Array.isArray(d.images) ? d.images.map(s => String(s).trim()).filter(Boolean) : [];
+    const isImage = images.length > 0;
+    const music = String(d.music || (d.music_info && d.music_info.play) || '').trim();
 
     res.json({
       ok: true,
-      title: j.data.title,
-      video: (j.data.play || '').trim(),
-      music: (j.data.music || '').trim(),
-      plan: info.plan,
-      limit,
-      remaining: limit === -1 ? -1 : Math.max(limit - used, 0)
+      type: isImage ? 'image' : 'video',
+      title: d.title || '',
+      author: (d.author && (d.author.nickname || d.author.unique_id)) || '',
+      video: isImage ? '' : String(d.play || d.hdplay || '').trim(),
+      images,
+      music,
+      plan: q.info.plan,
+      limit: q.limit,
+      remaining: q.remaining
     });
   } catch (e) {
+    await refund(q);
     res.status(500).json({ ok: false, error: e.message });
   }
 }
