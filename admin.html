@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Apioval Admin</title>
+<style>
+:root{--bg:#09090d;--card:#13131a;--line:#24242e;--txt:#f1f1f5;--mut:#8a8a9a;--a:#25f4ee;--b:#fe2c55}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0}
+h1 span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:16px;margin:0 0 10px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+input,select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0c0c11;color:var(--txt);font-size:14px;outline:none;margin-bottom:8px}
+input:focus,select:focus{border-color:var(--a)}
+button{padding:10px 14px;border:0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#000;background:var(--a)}
+button.sec{background:#22222c;color:var(--txt)}
+button.del{background:#3a1220;color:#ff6b88}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1}
+.msg{font-size:13px;margin-top:8px;color:var(--mut);min-height:16px}
+.msg.err{color:var(--b)}
+.mono{font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;color:var(--a)}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#0f0f15}
+.meta{font-size:12px;color:var(--mut);margin:4px 0 8px}
+.stats{display:flex;gap:8px;margin-bottom:14px}
+.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat b{display:block;font-size:20px}
+.stat small{color:var(--mut)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div id="loginView" style="max-width:380px;margin:60px auto 0">
+  <h1 style="margin-bottom:14px">Apioval <span>Admin</span></h1>
+  <div class="card">
+    <input id="u" placeholder="Username" autocomplete="username">
+    <input id="p" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="btnLogin" style="width:100%">Login</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<div id="panelView" class="hide">
+  <div class="top">
+    <h1>Apioval <span>Admin</span></h1>
+    <button class="sec" id="btnLogout">Logout</button>
+  </div>
+
+  <div class="card">
+    <h2>Key Admin (unlimited)</h2>
+    <div class="mono" id="adminKey">-</div>
+    <div class="row" style="margin-top:10px"><button class="sec" id="copyAdmin">Copy</button></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="sTotal">0</b><small>Total key</small></div>
+    <div class="stat"><b id="sUsed">0</b><small>Request hari ini</small></div>
+  </div>
+
+  <div class="card">
+    <h2>Buat Key Baru</h2>
+    <input id="newName" maxlength="30" placeholder="Nama (opsional)">
+    <select id="newPlan"></select>
+    <button id="btnCreate" style="width:100%">Buat Key</button>
+    <div class="msg" id="createMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Daftar API Key</h2>
+    <button class="sec" id="btnReload" style="margin-bottom:10px">Muat Ulang</button>
+    <div id="list"></div>
+    <div class="msg" id="listMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ganti Username / Password</h2>
+    <input id="cu" placeholder="Username sekarang" autocomplete="username">
+    <input id="cp" type="password" placeholder="Password sekarang" autocomplete="current-password">
+    <input id="nu" placeholder="Username baru (kosongkan kalau tetap)">
+    <input id="np" type="password" placeholder="Password baru (min 8 karakter)" autocomplete="new-password">
+    <button id="btnPass" style="width:100%">Simpan</button>
+    <div class="msg" id="passMsg"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let T = '';
+try { T = sessionStorage.getItem('ov_admin') || ''; } catch (e) {}
+let PLAN_LIST = ['free','premium','unlimited'];
+
+function msg(id, t, err){ const e=$(id); e.textContent=t; e.className='msg'+(err?' err':''); }
+
+async function api(body){
+  const r = await fetch('/api/admin', {
+    method:'POST',
+    headers:{'Content-Type':'application/json', Authorization:'Bearer '+T},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if(r.status === 401 && body.action !== 'login' && body.action !== 'changepass') { showLogin(); }
+  if(!d.ok) throw new Error(d.error || 'Gagal');
+  return d;
+}
+
+function showLogin(){
+  T=''; try{sessionStorage.removeItem('ov_admin');}catch(e){}
+  $('panelView').classList.add('hide');
+  $('loginView').classList.remove('hide');
+}
+function showPanel(){
+  $('loginView').classList.add('hide');
+  $('panelView').classList.remove('hide');
+  load();
+}
+
+$('btnLogin').onclick = async () => {
+  $('btnLogin').disabled = true;
+  msg('loginMsg','Masuk...');
+  try{
+    const d = await api({action:'login', username:$('u').value.trim(), password:$('p').value});
+    T = d.token;
+    try{ sessionStorage.setItem('ov_admin', T); sessionStorage.setItem('ov_adminkey', d.adminKey||''); }catch(e){}
+    $('adminKey').textContent = d.adminKey || '(ADMIN_KEY belum diset)';
+    $('cu').value = $('u').value.trim();
+    $('p').value = '';
+    msg('loginMsg','');
+    showPanel();
+  }catch(e){ msg('loginMsg', e.message, true); }
+  $('btnLogin').disabled = false;
+};
+$('p').addEventListener('keydown', e => { if(e.key==='Enter') $('btnLogin').click(); });
+
+$('btnLogout').onclick = async () => {
+  try{ await api({action:'logout'}); }catch(e){}
+  showLogin();
+};
+
+$('copyAdmin').onclick = async () => {
+  try{ await navigator.clipboard.writeText($('adminKey').textContent); msg('createMsg','Key admin tersalin.'); }
+  catch(e){ msg('createMsg','Gagal copy.', true); }
+};
+
+function fillPlans(sel, selected){
+  sel.innerHTML = '';
+  PLAN_LIST.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=p; if(p===selected) o.selected=true; sel.appendChild(o); });
+}
+
+async function load(){
+  msg('listMsg','Memuat...');
+  try{
+    const d = await api({action:'list'});
+    PLAN_LIST = Object.keys(d.limits);
+    fillPlans($('newPlan'), 'free');
+    $('sTotal').textContent = d.items.length;
+    $('sUsed').textContent = d.items.reduce((a,i)=>a+i.used,0);
+    const box = $('list'); box.innerHTML = '';
+    if(!d.items.length){ msg('listMsg','Belum ada key.'); return; }
+    d.items.forEach(it => {
+      const el = document.createElement('div'); el.className='item';
+      const k = document.createElement('div'); k.className='mono'; k.textContent = it.key;
+      const m = document.createElement('div'); m.className='meta';
+      const lim = d.limits[it.plan];
+      m.textContent = (it.name ? it.name + ' • ' : '') + 'Hari ini: ' + it.used + ' / ' + (lim === -1 ? '∞' : lim) + (it.created ? ' • ' + new Date(it.created).toLocaleDateString('id-ID') : '');
+      const row = document.createElement('div'); row.className='row';
+      const sel = document.createElement('select'); sel.style.marginBottom='0'; fillPlans(sel, it.plan);
+      const bs = document.createElement('button'); bs.textContent='Simpan';
+      const bc = document.createElement('button'); bc.className='sec'; bc.textContent='Copy';
+      const bd = document.createElement('button'); bd.className='del'; bd.textContent='Hapus';
+      bs.onclick = async () => { try{ await api({action:'setplan', key:it.key, plan:sel.value}); msg('listMsg','Plan diubah.'); load(); }catch(e){ msg('listMsg', e.message, true); } };
+      bc.onclick = async () => { try{ await navigator.clipboard.writeText(it.key); msg('listMsg','Tersalin.'); }catch(e){} };
+      bd.onclick = async () => { if(!confirm('Hapus key ini?')) return; try{ await api({action:'delete', key:it.key}); load(); }catch(e){ msg('listMsg', e.message, true); } };
+      row.append(sel, bs, bc, bd);
+      el.append(k, m, row);
+      box.appendChild(el);
+    });
+    msg('listMsg','');
+  }catch(e){ msg('listMsg', e.message, true); }
+}
+$('btnReload').onclick = load;
+
+$('btnCreate').onclick = async () => {
+  try{
+    const d = await api({action:'create', name:$('newName').value.trim(), plan:$('newPlan').value});
+    msg('createMsg', 'Dibuat: ' + d.key);
+    $('newName').value='';
+    load();
+  }catch(e){ msg('createMsg', e.message, true); }
+};
+
+$('btnPass').onclick = async () => {
+  try{
+    await api({action:'changepass', username:$('cu').value.trim(), current:$('cp').value, newUsername:$('nu').value.trim(), newPassword:$('np').value});
+    msg('passMsg','Berhasil diganti. Pakai yang baru saat login berikutnya.');
+    $('cp').value=''; $('np').value=''; $('nu').value='';
+  }catch(e){ msg('passMsg', e.message, true); }
+};
+
+if(T){
+  try{ $('adminKey').textContent = sessionStorage.getItem('ov_adminkey') || '-'; }catch(e){}
+  showPanel();
+}
+</script>
+</body>
+</html>
