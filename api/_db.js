@@ -21,6 +21,9 @@ export function today() {
 }
 
 export async function getKey(key) {
+  if (process.env.ADMIN_KEY && key === process.env.ADMIN_KEY) {
+    return { name: 'admin', plan: 'unlimited' };
+  }
   if (!/^ov_[a-f0-9]{24}$/.test(key || '')) return null;
   const raw = await redis('GET', 'apikey:' + key);
   return raw ? JSON.parse(raw) : null;
