@@ -1,4 +1,7 @@
 {
   "type": "module",
-  "dependencies": { "@napi-rs/canvas": "^0.1.60" }
+  "dependencies": { 
+  "@napi-rs/canvas": "^0.1.60",
+  "axios": "^1.7.9"
+  }
 }
