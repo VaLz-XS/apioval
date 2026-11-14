@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apioval - TikTok Downloader</title>
+<style>
+  :root{--bg:#0b0b0f;--card:#15151c;--line:#26262f;--txt:#f2f2f5;--mut:#8b8b99;--acc:#25f4ee;--acc2:#fe2c55}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;min-height:100vh}
+  .wrap{max-width:560px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:26px;margin:8px 0 4px}
+  h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  p.sub{color:var(--mut);margin:0 0 20px;font-size:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#0f0f14;color:var(--txt);font-size:15px;outline:none}
+  input:focus{border-color:var(--acc)}
+  .row{display:flex;gap:8px;margin-top:10px}
+  button,a.btn{flex:1;padding:12px;border:0;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;color:#000;background:var(--acc)}
+  button.sec,a.btn.sec{background:#23232d;color:var(--txt)}
+  button:disabled{opacity:.5}
+  #status{margin-top:12px;font-size:14px;color:var(--mut);min-height:18px}
+  #status.err{color:var(--acc2)}
+  video{width:100%;border-radius:10px;background:#000;max-height:60vh}
+  #title{font-size:14px;margin:12px 0;word-break:break-word}
+  .hide{display:none}
+  code{background:#0f0f14;border:1px solid var(--line);padding:3px 6px;border-radius:6px;font-size:12px;word-break:break-all}
+  h2{font-size:15px;margin:0 0 10px}
+  .doc p{font-size:13px;color:var(--mut);margin:8px 0}
+  footer{text-align:center;color:var(--mut);font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Api<span>oval</span></h1>
+  <p class="sub">Download video TikTok tanpa watermark</p>
+
+  <div class="card">
+    <input id="url" type="url" placeholder="Tempel link TikTok di sini..." autocomplete="off">
+    <div class="row">
+      <button class="sec" id="paste">Paste</button>
+      <button id="go">Ambil Video</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card hide" id="result">
+    <video id="vid" controls playsinline referrerpolicy="no-referrer"></video>
+    <div id="title"></div>
+    <div class="row">
+      <a class="btn" id="dlVideo" target="_blank" rel="noopener" referrerpolicy="no-referrer">Buka Video</a>
+      <a class="btn sec" id="dlMusic" target="_blank" rel="noopener" referrerpolicy="no-referrer">Buka Audio</a>
+    </div>
+    <p style="font-size:12px;color:var(--mut);margin:10px 0 0">Kalau video kebuka di tab baru, tahan layar lalu pilih "Download video".</p>
+  </div>
+
+  <div class="card doc">
+    <h2>Dokumentasi API</h2>
+    <p>Endpoint:</p>
+    <code>GET /api/tiktok?url=LINK_TIKTOK</code>
+    <p>Contoh response:</p>
+    <code>{"ok":true,"title":"...","video":"https://...","music":"https://..."}</code>
+    <p>Contoh di bot:</p>
+    <code>fetch("https://apioval.vercel.app/api/tiktok?url=" + encodeURIComponent(url))</code>
+  </div>
+
+  <footer>Apioval &copy; <span id="yr"></span></footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+$('yr').textContent = new Date().getFullYear();
+
+function setStatus(msg, err){ const s=$('status'); s.textContent=msg; s.className=err?'err':''; }
+
+$('paste').onclick = async () => {
+  try { $('url').value = await navigator.clipboard.readText(); }
+  catch { setStatus('Gagal baca clipboard, tempel manual aja.', true); }
+};
+
+async function run(){
+  const url = $('url').value.trim();
+  if(!url){ setStatus('Isi link TikTok dulu.', true); return; }
+  $('go').disabled = true;
+  $('result').classList.add('hide');
+  setStatus('Lagi ngambil video...');
+  try{
+    const r = await fetch('/api/tiktok?url=' + encodeURIComponent(url));
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error || 'Gagal ambil video');
+    const video = (d.video||'').trim();
+    const music = (d.music||'').trim();
+    $('vid').src = video;
+    $('title').textContent = d.title || '';
+    $('dlVideo').href = video;
+    $('dlMusic').href = music;
+    $('result').classList.remove('hide');
+    setStatus('Berhasil.');
+  }catch(e){
+    setStatus(e.message, true);
+  }finally{
+    $('go').disabled = false;
+  }
+}
+$('go').onclick = run;
+$('url').addEventListener('keydown', e => { if(e.key==='Enter') run(); });
+</script>
+</body>
+</html>
