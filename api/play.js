@@ -1,46 +1,37 @@
-import { useQuota, refund } from './_db.js';
+import yts from 'yt-search'
+import ytScraper from '@denzy-official/youtube_scraper'
 
 export default async function handler(req, res) {
-  const q = String(req.query.q || '').trim();
-  if (!q) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(400).json({ ok: false, error: 'q kosong' });
-  }
+    const q = req.query.q || ''
+    if (!q) return res.status(400).json({ ok: false, error: 'Query kosong' })
 
-  // Cek kuota (sama kayak tiktok.js)
-  const quota = await useQuota(req, res);
-  if (!quota) return;
+    try {
+        // 1. Cari video
+        const search = await yts(q)
+        if (!search.videos.length) {
+            return res.status(502).json({ ok: false, error: 'Video tidak ditemukan' })
+        }
+        const video = search.videos[0]
 
-  try {
-    // Tembak API YouTube (pake nexoracle)
-    const apiUrl = `https://api.nexoracle.com/search/youtube?apikey=free&q=${encodeURIComponent(q)}`;
-    const r = await fetch(apiUrl);
-    const j = await r.json();
+        // 2. Download MP3
+        const mp3 = await ytScraper.ytmp3(video.url)
 
-    if (!j.result || !Array.isArray(j.result) || j.result.length === 0) {
-      await refund(quota);
-      return res.status(502).json({ ok: false, error: 'Lagu tidak ditemukan' });
+        if (!mp3.status || !mp3.download || !mp3.download.url) {
+            return res.status(502).json({ ok: false, error: 'Gagal ambil audio' })
+        }
+
+        // 3. Balikin JSON
+        return res.status(200).json({
+            ok: true,
+            title: video.title,
+            author: video.author.name,
+            duration: video.duration.timestamp,
+            views: video.views,
+            thumbnail: video.thumbnail,
+            audio: mp3.download.url
+        })
+
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: e.message })
     }
-
-    // Ambil hasil pertama
-    const first = j.result[0];
-
-    // Balikin JSON (sama struktur kayak tiktok.js)
-    res.json({
-      ok: true,
-      title: first.title || '',
-      author: first.author || '',
-      video: `https://youtube.com/watch?v=${first.videoId}`,
-      thumbnail: first.thumbnail || '',
-      duration: first.duration || '',
-      views: first.views || '',
-      plan: quota.info.plan,
-      limit: quota.limit,
-      remaining: quota.remaining
-    });
-
-  } catch (e) {
-    await refund(quota);
-    res.status(500).json({ ok: false, error: e.message });
-  }
 }
