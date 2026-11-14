@@ -12,7 +12,8 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;background:#0a5aa8 linear-gradient(#27a9ec 0,#1286d6 30%,#0a5aa8 65%,#073a78 100%);min-height:100vh}
-.mono,code,pre,.tag,.chip,.links a,small,button,.btn,input{font-family:'JetBrains Mono',ui-monospace,monospace}
+code,pre,.tag,.chip,small,button,.btn,input{font-family:'JetBrains Mono',ui-monospace,monospace}
+.hide{display:none!important}
 
 .page{position:relative;overflow:hidden;min-height:100vh}
 .sandbg{position:absolute;top:0;left:0;right:0;height:210px;background:var(--sand);z-index:0}
@@ -26,12 +27,20 @@ body{margin:0;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;
 
 .col{position:relative;z-index:2;max-width:640px;margin:0 auto;padding-bottom:30px}
 
-.nav{position:sticky;top:8px;z-index:20;margin:8px 12px 0;display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0f5d8c;border:2.5px solid var(--ink);border-radius:18px;box-shadow:3px 3px 0 var(--ink);color:#fff}
+.nav{position:sticky;top:8px;z-index:20;margin:8px 12px 0;display:flex;align-items:center;gap:10px;padding:8px 10px;background:#0f5d8c;border:2.5px solid var(--ink);border-radius:18px;box-shadow:3px 3px 0 var(--ink);color:#fff}
+.burger{width:40px;height:40px;padding:0;flex:none;display:grid;place-content:center;gap:4px;background:var(--yel);border:2.5px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink)}
+.burger i{display:block;width:18px;height:3px;background:var(--ink);border-radius:2px}
 .brand{font-weight:700;font-size:15px;white-space:nowrap}
 .brand small{display:block;font-size:9px;color:#9fd2f2;font-weight:500}
-.links{display:flex;gap:4px;margin-left:auto;background:#1a7ab0;border:2px solid #0b3f63;border-radius:99px;padding:3px}
-.links a{color:#cfe9fb;text-decoration:none;font-size:11px;font-weight:700;padding:6px 11px;border-radius:99px;white-space:nowrap}
-.links a.on,.links a:hover{background:#0a8cf0;color:#fff;box-shadow:0 0 0 2px #fff inset}
+.cur{margin-left:auto;font-size:11px;font-weight:700;background:#1a7ab0;border:2px solid #0b3f63;border-radius:99px;padding:6px 12px}
+
+.scrim{position:fixed;inset:0;background:rgba(5,15,40,.55);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:78%;max-width:300px;background:var(--cream);border-right:3px solid var(--ink);box-shadow:5px 0 0 var(--ink);z-index:50;transform:translateX(-105%);transition:transform .22s;padding:18px 14px;display:flex;flex-direction:column;gap:10px}
+.drawer.open{transform:none}
+.drawer h3{margin:4px 0 8px;font-size:18px}
+.mi{width:100%;text-align:left;background:#fff;color:var(--ink)}
+.mi.on{background:var(--yel)}
 
 .tags{display:flex;gap:8px;flex-wrap:wrap;margin:14px 12px 0}
 .tag{font-size:11px;font-weight:700;padding:5px 10px;border:2px solid var(--ink);border-radius:8px;background:#fff;box-shadow:2px 2px 0 var(--ink)}
@@ -68,9 +77,10 @@ button:disabled{opacity:.6}
 .bar{height:16px;background:#fff;border:2.5px solid var(--ink);border-radius:99px;overflow:hidden;margin:12px 0 6px}
 .bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--yel) 0 8px,#ffc800 8px 16px);transition:width .4s}
 .meta{display:flex;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin-bottom:12px}
-video{width:100%;border:2.5px solid var(--ink);border-radius:12px;background:#000;max-height:60vh;margin-top:12px}
-#ttl{margin:10px 0;word-break:break-word}
-.hide{display:none}
+video,.out img{width:100%;border:2.5px solid var(--ink);border-radius:12px;background:#fff;max-height:60vh;margin-top:12px;object-fit:contain}
+video{background:#000}
+.out p{margin:10px 0;word-break:break-word}
+.ex{font-family:'JetBrains Mono',monospace;font-size:10.5px;background:#f4f1e4;border:1.5px solid var(--ink);border-radius:8px;padding:8px;word-break:break-all;margin:0 0 10px}
 
 .win{border:2.5px solid var(--ink);border-radius:14px;overflow:hidden;background:#fff;margin-top:12px;box-shadow:3px 3px 0 var(--ink)}
 .wbar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#fbefc8;border-bottom:2.5px solid var(--ink)}
@@ -85,6 +95,15 @@ footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-
 </style>
 </head>
 <body>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <h3>Menu</h3>
+  <button class="mi on" data-go="home">🏠 Beranda</button>
+  <button class="mi" data-go="endpoint">🔌 Endpoint</button>
+  <button class="mi" data-go="docs">📖 Dokumentasi</button>
+</aside>
+
 <div class="page">
   <div class="sandbg"></div>
   <div id="bubbles"></div>
@@ -95,35 +114,33 @@ footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-
 
   <div class="col">
     <nav class="nav">
+      <button class="burger" id="burger" aria-label="Menu"><i></i><i></i><i></i></button>
       <div class="brand">Apioval<small>&gt;_ REST API</small></div>
-      <div class="links">
-        <a href="#key" class="on">Key</a>
-        <a href="#try">Coba</a>
-        <a href="#docs">Docs</a>
-      </div>
+      <div class="cur" id="curview">Beranda</div>
     </nav>
 
     <div class="tags">
       <span class="tag y">01 // REST API</span>
-      <span class="tag">TikTok Downloader</span>
+      <span class="tag">Apioval</span>
     </div>
     <div class="spacer"></div>
 
-    <section class="card" id="top">
+    <!-- BERANDA -->
+    <section class="card" data-view="home">
       <h1>Apioval</h1>
       <div class="sub">API simpel buat bot lu</div>
-      <p>Ambil video TikTok tanpa watermark lewat satu endpoint. Bikin API key sendiri, langsung pakai di bot.</p>
+      <p>Kumpulan endpoint buat bot WhatsApp: downloader TikTok, brat sticker, dan lainnya. Bikin API key sendiri, langsung pakai.</p>
       <div class="grid3">
         <div class="box b1"><small>Limit</small><b>100 / hari</b></div>
         <div class="box b2"><small>Biaya</small><b>Gratis</b></div>
-        <div class="box b3"><small>Format</small><b>JSON</b></div>
+        <div class="box b3"><small>Format</small><b>JSON/IMG</b></div>
       </div>
       <div class="chips">
-        <span class="chip">REST</span><span class="chip">Node.js</span><span class="chip">Vercel</span><span class="chip">Tanpa Watermark</span>
+        <span class="chip">REST</span><span class="chip">Node.js</span><span class="chip">Vercel</span>
       </div>
     </section>
 
-    <section class="card" id="key">
+    <section class="card" data-view="home" id="key">
       <h2>API Key</h2>
       <div class="sub">Reset tiap 00:00 WIB</div>
       <div id="make">
@@ -143,26 +160,16 @@ footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-
       <div class="msg" id="keymsg"></div>
     </section>
 
-    <section class="card" id="try">
-      <h2>Coba Langsung</h2>
-      <div class="sub">Pakai API key di atas</div>
-      <input id="url" type="url" placeholder="Tempel link TikTok...">
-      <div class="row">
-        <button class="w" id="btnPaste">Paste</button>
-        <button class="y" id="btnGo">Ambil Video</button>
-      </div>
-      <div class="msg" id="trymsg"></div>
-      <div id="result" class="hide">
-        <video id="vid" controls playsinline></video>
-        <p id="ttl"></p>
-        <div class="row">
-          <a class="btn" id="dlv" target="_blank" rel="noopener">Buka Video</a>
-          <a class="btn w" id="dla" target="_blank" rel="noopener">Buka Audio</a>
-        </div>
-      </div>
+    <!-- ENDPOINT -->
+    <section class="card hide" data-view="endpoint">
+      <h2>Daftar Endpoint</h2>
+      <div class="sub">Coba langsung pakai API key lu</div>
+      <p>Semua endpoint di bawah bisa dicoba di sini. Buat API key dulu di Beranda kalau belum punya.</p>
     </section>
+    <div class="hide" data-view="endpoint" id="epList"></div>
 
-    <section class="card" id="docs">
+    <!-- DOKUMENTASI -->
+    <section class="card hide" data-view="docs">
       <h2>Dokumentasi</h2>
       <div class="sub">Semua endpoint pakai GET kecuali register</div>
 
@@ -184,6 +191,16 @@ footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-
       </div>
 
       <div class="win">
+        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">GET /api/brat</span></div>
+        <div class="wbody">
+          <p>Parameter: <b>text</b>, <b>apikey</b>. Opsional: <b>format</b> (png/webp), <b>bg</b>, <b>color</b> (hex tanpa #)</p>
+          <pre>/api/brat?text=halo+dunia&amp;apikey=ov_xxx
+/api/brat?text=halo&amp;format=webp&amp;apikey=ov_xxx</pre>
+          <p>Response berupa gambar 512x512.</p>
+        </div>
+      </div>
+
+      <div class="win">
         <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">GET /api/usage</span></div>
         <div class="wbody"><pre>/api/usage?apikey=ov_xxx</pre></div>
       </div>
@@ -197,20 +214,11 @@ footer{text-align:center;color:#fff;font-family:'JetBrains Mono',monospace;font-
       </div>
 
       <div class="win">
-        <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">bot.js</span></div>
-        <div class="wbody"><pre>const r = await fetch(
-  `https://apioval.vercel.app/api/tiktok?url=${encodeURIComponent(link)}&amp;apikey=KEY_LU`
-);
-const d = await r.json();
-if (d.ok) { /* kirim d.video */ }
-else { /* d.error */ }</pre></div>
-      </div>
-
-      <div class="win">
         <div class="wbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="addr">kode error</span></div>
         <div class="wbody"><pre>401  API key kosong / tidak valid
-400  parameter url kosong
+400  parameter kosong
 429  limit harian habis
+500  gagal membuat gambar
 502  gagal ambil video</pre></div>
       </div>
     </section>
@@ -223,7 +231,6 @@ else { /* d.error */ }</pre></div>
 const $ = id => document.getElementById(id);
 $('yr').textContent = new Date().getFullYear();
 
-// gelembung
 (function(){
   const bw = $('bubbles');
   for(let i=0;i<12;i++){
@@ -235,15 +242,26 @@ $('yr').textContent = new Date().getFullYear();
   }
 })();
 
-document.querySelectorAll('.links a').forEach(a => a.addEventListener('click', () => {
-  document.querySelectorAll('.links a').forEach(x => x.classList.remove('on'));
-  a.classList.add('on');
-}));
+/* ===== menu & halaman ===== */
+const NAMES = { home:'Beranda', endpoint:'Endpoint', docs:'Dokumentasi' };
+function openDrawer(){ $('drawer').classList.add('open'); $('scrim').classList.add('open'); }
+function closeDrawer(){ $('drawer').classList.remove('open'); $('scrim').classList.remove('open'); }
+function show(v){
+  document.querySelectorAll('[data-view]').forEach(e => e.classList.toggle('hide', e.dataset.view !== v));
+  document.querySelectorAll('.mi').forEach(b => b.classList.toggle('on', b.dataset.go === v));
+  $('curview').textContent = NAMES[v];
+  closeDrawer();
+  window.scrollTo(0,0);
+}
+$('burger').onclick = openDrawer;
+$('scrim').onclick = closeDrawer;
+document.querySelectorAll('.mi').forEach(b => b.onclick = () => show(b.dataset.go));
 
+/* ===== API key ===== */
 const LS = 'apioval_key';
 function getK(){ try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } }
 function setK(v){ try{ v ? localStorage.setItem(LS, v) : localStorage.removeItem(LS); }catch(e){} }
-function msg(id, t, err){ const e=$(id); e.textContent=t; e.className='msg'+(err?' err':''); }
+function msg(id, t, err){ const e = typeof id === 'string' ? $(id) : id; e.textContent = t; e.className = 'msg' + (err ? ' err' : ''); }
 
 function showKey(k){
   if(!k){ $('make').style.display='block'; $('keybox').style.display='none'; return; }
@@ -288,7 +306,6 @@ $('btnMake').onclick = async () => {
   }catch(e){ msg('keymsg', e.message, true); }
   $('btnMake').disabled = false;
 };
-
 $('btnCopy').onclick = async () => {
   try{ await navigator.clipboard.writeText(getK()); msg('keymsg','Tersalin.'); }
   catch(e){ msg('keymsg','Gagal copy, salin manual.', true); }
@@ -298,36 +315,74 @@ $('btnForget').onclick = () => {
   if(confirm('Hapus key dari browser ini? Pastikan sudah disimpan.')){ setK(''); showKey(''); }
 };
 
-$('btnPaste').onclick = async () => {
-  try{ $('url').value = await navigator.clipboard.readText(); }
-  catch(e){ msg('trymsg','Gagal baca clipboard.', true); }
-};
+/* ===== daftar endpoint (tambah endpoint baru cukup tambah di sini) ===== */
+const EPS = [
+  { id:'tiktok', name:'TikTok Downloader', method:'GET', path:'/api/tiktok', param:'url',
+    desc:'Download video TikTok tanpa watermark.', ph:'Link TikTok...', type:'video',
+    sample:'/api/tiktok?url=LINK_TIKTOK&apikey=KEY' },
+  { id:'brat', name:'Brat Sticker', method:'GET', path:'/api/brat', param:'text',
+    desc:'Bikin gambar brat 512x512 (background putih, teks hitam). Tambah format=webp buat stiker WA.', ph:'Teks brat...', type:'image',
+    sample:'/api/brat?text=halo+dunia&apikey=KEY' }
+];
 
-async function go(){
-  const k = getK(), u = $('url').value.trim();
-  if(!k){ msg('trymsg','Buat API key dulu di atas.', true); return; }
-  if(!u){ msg('trymsg','Isi link TikTok dulu.', true); return; }
-  $('btnGo').disabled = true;
-  $('result').classList.add('hide');
-  msg('trymsg','Lagi ngambil video...');
-  try{
-    const r = await fetch('/api/tiktok?url=' + encodeURIComponent(u) + '&apikey=' + encodeURIComponent(k));
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.error || 'Gagal');
-    $('vid').src = d.video;
-    $('ttl').textContent = d.title || '';
-    $('dlv').href = d.video;
-    $('dla').href = d.music;
-    $('result').classList.remove('hide');
-    msg('trymsg','Berhasil.' + (d.remaining >= 0 ? ' Sisa limit hari ini: ' + d.remaining : ''));
-    refresh();
-  }catch(e){ msg('trymsg', e.message, true); }
-  $('btnGo').disabled = false;
+function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
+
+function buildEps(){
+  const box = $('epList'); box.innerHTML = '';
+  EPS.forEach(ep => {
+    const c = el('section','card');
+    c.append(el('h2','',ep.name), el('div','sub',ep.method + ' ' + ep.path), el('p','',ep.desc));
+    c.append(el('div','ex',location.origin + ep.sample));
+    const inp = el('input'); inp.placeholder = ep.ph; if(ep.param === 'url') inp.type = 'url';
+    const row = el('div','row');
+    const bp = el('button','w','Paste'), bg = el('button','y','Coba');
+    row.append(bp, bg);
+    const m = el('div','msg'), out = el('div','out hide');
+    c.append(inp, row, m, out);
+    box.appendChild(c);
+
+    bp.onclick = async () => { try{ inp.value = await navigator.clipboard.readText(); }catch(e){ msg(m,'Gagal baca clipboard.', true); } };
+
+    const run = async () => {
+      const k = getK(), v = inp.value.trim();
+      if(!k){ msg(m,'Buat API key dulu di Beranda.', true); return; }
+      if(!v){ msg(m,'Isi dulu inputnya.', true); return; }
+      bg.disabled = true; out.classList.add('hide'); out.innerHTML = '';
+      msg(m,'Memproses...');
+      try{
+        const u = ep.path + '?' + ep.param + '=' + encodeURIComponent(v) + '&apikey=' + encodeURIComponent(k);
+        const r = await fetch(u);
+        const ct = r.headers.get('content-type') || '';
+        if(ct.includes('image')){
+          const url = URL.createObjectURL(await r.blob());
+          const img = el('img'); img.src = url; img.alt = ep.name;
+          const a = el('a','btn','Download'); a.href = url; a.download = ep.id + '.png';
+          out.append(img, el('p'), a);
+          msg(m,'Berhasil.');
+        } else {
+          const d = await r.json();
+          if(!d.ok) throw new Error(d.error || 'Gagal');
+          const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
+          const rw = el('div','row');
+          const a1 = el('a','btn','Buka Video'); a1.href = d.video; a1.target = '_blank'; a1.rel = 'noopener';
+          const a2 = el('a','btn w','Buka Audio'); a2.href = d.music; a2.target = '_blank'; a2.rel = 'noopener';
+          rw.append(a1, a2);
+          out.append(vd, el('p','',d.title || ''), rw);
+          msg(m,'Berhasil.' + (d.remaining >= 0 ? ' Sisa limit: ' + d.remaining : ''));
+        }
+        out.classList.remove('hide');
+        refresh();
+      }catch(e){ msg(m, e.message, true); }
+      bg.disabled = false;
+    };
+    bg.onclick = run;
+    inp.addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
+  });
 }
-$('btnGo').onclick = go;
-$('url').addEventListener('keydown', e => { if(e.key === 'Enter') go(); });
 
+buildEps();
 showKey(getK());
+show('home');
 </script>
 </body>
 </html>
