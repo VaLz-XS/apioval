@@ -2,6 +2,8 @@ import { useQuota, refund } from './_db.js';
 
 export default async function handler(req, res) {
     const q = String(req.query.q || '').trim();
+    const limit = Math.min(parseInt(req.query.limit) || 5, 20); // Default 5, maks 20
+
     if (!q) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         return res.status(400).json({ ok: false, error: 'q kosong' });
@@ -11,12 +13,10 @@ export default async function handler(req, res) {
     if (!quota) return;
 
     try {
-        // Tembak API search Pinterest (simpe)
         const apiUrl = `https://api.azbry.com/api/search/pinterest?q=${encodeURIComponent(q)}`;
         const r = await fetch(apiUrl);
         const j = await r.json();
 
-        // Cek format response (bisa result, data, atau array)
         let images = [];
         if (j.result && Array.isArray(j.result)) {
             images = j.result.map(item => item.url || item.image || item).filter(Boolean);
@@ -31,13 +31,13 @@ export default async function handler(req, res) {
             return res.status(502).json({ ok: false, error: 'Gambar tidak ditemukan' });
         }
 
-        // Balikin JSON (formatnya mirip downloads)
+        // Balikin JSON (pake limit yang diminta)
         return res.status(200).json({
             ok: true,
             title: 'Pinterest Media',
             thumbnail: images[0],
             type: 'image',
-            downloads: images.slice(0, 5).map(url => ({
+            downloads: images.slice(0, limit).map(url => ({
                 type: 'image',
                 url: url,
                 thumbnail: url
