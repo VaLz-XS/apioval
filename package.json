@@ -4,6 +4,7 @@
   "@napi-rs/canvas": "^0.1.60",
   "axios": "^1.7.9",
   "yt-search": "^2.13.1",
+  "cheerio": "^1.0.0",
   "@denzy-official/youtube_scraper": "latest"
   }
 }
