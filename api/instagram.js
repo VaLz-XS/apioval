@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (!quota) return;
 
     try {
-        // === LOGIKA SCRAPE INDOWN.NET (PERSIS KODE LU) ===
+        // === LOGIKA SCRAPE INDOWN.NET ===
         const cleanUrl = url.split("?")[0];
         const payload = new URLSearchParams();
         payload.append("q", cleanUrl);
@@ -47,15 +47,36 @@ export default async function handler(req, res) {
             const thumb = $(el).find("img").attr("src");
             if (thumb && !thumbnail) thumbnail = thumb;
 
-            $(el).find("a[href*='download'], a.abutton, a.btn, a[href*='snapcdn'], a[href*='rapidcdn'], a[href*='cdninstagram']").each((_, a) => {
-                const href = $(a).attr("href");
-                if (href && href.startsWith("http") && !downloads.some((d) => d.url === href)) {
-                    downloads.push({
-                        type: "video", // Anggep video dulu, nanti bot yang nentuin
-                        url: href,
-                        thumbnail: thumb || href,
-                    });
-                }
+            // === FILTER LEBIH KETAT ===
+            $(el).find("a[href]").each((_, a) => {
+                let href = $(a).attr("href");
+                if (!href || !href.startsWith("http")) return;
+
+                // Buang link yang bukan media (misal link redirect, profil, dll)
+                if (href.includes("indown.net") || href.includes("instagram.com") || href.includes("snapinsta")) return;
+
+                // Pastiin ini link CDN media asli
+                const isMediaUrl = href.includes("snapcdn") || 
+                                   href.includes("rapidcdn") || 
+                                   href.includes("cdninstagram") || 
+                                   href.includes(".mp4") || 
+                                   href.includes(".jpg") || 
+                                   href.includes(".webp");
+
+                if (!isMediaUrl) return;
+
+                // Hindari duplikat
+                if (downloads.some((d) => d.url === href)) return;
+
+                // Deteksi tipe berdasarkan URL atau teks tombol
+                const isVideo = href.includes(".mp4") || $(a).text().toLowerCase().includes("video");
+                const type = isVideo ? "video" : "image";
+
+                downloads.push({
+                    type: type,
+                    url: href,
+                    thumbnail: thumb || href,
+                });
             });
         });
 
@@ -64,7 +85,13 @@ export default async function handler(req, res) {
             return res.status(502).json({ ok: false, error: "Media tidak ditemukan (mungkin private)" });
         }
 
-        // Balikin JSON
+        // === SORTIR: Taruh video di paling atas, gambar di bawah ===
+        downloads.sort((a, b) => {
+            if (a.type === 'video' && b.type !== 'video') return -1;
+            if (a.type !== 'video' && b.type === 'video') return 1;
+            return 0;
+        });
+
         return res.status(200).json({
             ok: true,
             title: "Instagram Media",
