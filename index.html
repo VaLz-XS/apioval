@@ -207,11 +207,11 @@ footer svg{vertical-align:-2px}
     Dokumentasi
   </button>
   
-  <!-- TOMBOL CHAT GLOBAL -->
-  <a href="/chat.html" class="mi" style="text-decoration:none;">
+  <!-- TOMBOL CHAT GLOBAL (DIPERBAIKI) -->
+  <button class="mi" onclick="window.location.href='/chat.html'">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
     Chat Global
-  </a>
+  </button>
 </aside>
 
 <div class="page">
@@ -374,7 +374,7 @@ function show(v){
 }
 $('burger').onclick = openDrawer;
 $('scrim').onclick = closeDrawer;
-document.querySelectorAll('.mi').forEach(b => b.onclick = () => show(b.dataset.go));
+document.querySelectorAll('.mi[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
 
 /* ===== API key ===== */
 const LS = 'apioval_key';
