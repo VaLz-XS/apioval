@@ -5,65 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Global Chat - Apioval</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
-    body { font-family: 'Space Grotesk', sans-serif; background: #0a5aa8; }
-    .chat-bubble { border: 2.5px solid #0b1b33; border-radius: 12px; box-shadow: 3px 3px 0 #0b1b33; background: #fff; }
+    :root{--ink:#0b1b33;--cream:#fffdf4;--blue:#0a74b8;--yel:#ffdf3d;--sand:#eed79c}
+    body { 
+        font-family: 'Space Grotesk', sans-serif; 
+        background: #0a5aa8 linear-gradient(#27a9ec 0,#1286d6 30%,#0a5aa8 65%,#073a78 100%);
+        min-height: 100vh;
+        color: var(--ink);
+    }
+    .card {
+        background: var(--cream);
+        border: 3px solid var(--ink);
+        border-radius: 20px;
+        box-shadow: 5px 5px 0 var(--ink);
+    }
+    input, button {
+        font-family: 'JetBrains Mono', monospace;
+        border: 2.5px solid var(--ink);
+        border-radius: 10px;
+        box-shadow: 3px 3px 0 var(--ink);
+        transition: transform .08s, box-shadow .08s;
+    }
+    button:active {
+        transform: translate(3px,3px);
+        box-shadow: 0 0 0 var(--ink);
+    }
+    .chat-bubble {
+        background: #fff;
+        border: 2px solid var(--ink);
+        border-radius: 12px;
+        padding: 8px 12px;
+        box-shadow: 2px 2px 0 var(--ink);
+        max-width: 80%;
+        word-break: break-word;
+    }
+    .chat-name {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--blue);
+        margin-bottom: 2px;
+    }
+    .chat-time {
+        font-size: 9px;
+        color: #888;
+        margin-left: 6px;
+    }
 </style>
 </head>
-<body class="p-4">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="text-3xl font-bold text-white mb-4">💬 Global Chat</h1>
+<body class="p-4 flex flex-col items-center">
+
+    <!-- HEADER -->
+    <div class="w-full max-w-2xl mb-4 flex items-center gap-3">
+        <a href="/" class="bg-yellow-300 p-2 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000]">
+            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </a>
+        <h1 class="text-2xl font-bold text-white">💬 Global Chat</h1>
+    </div>
+
+    <!-- KARTU CHAT -->
+    <div class="card w-full max-w-2xl p-4 md:p-6 flex flex-col h-[80vh]">
         
-        <!-- Input Nama -->
+        <!-- INPUT NAMA -->
         <div class="mb-4">
-            <input id="name" placeholder="Nama lu..." class="w-full p-3 border-2 border-black rounded-lg" maxlength="30">
+            <input id="name" placeholder="Masukan nama kamu..." class="w-full p-3 bg-white focus:outline-none" maxlength="30">
         </div>
 
-        <!-- Chat Box -->
-        <div id="chatBox" class="chat-bubble p-4 h-96 overflow-y-auto mb-4 flex flex-col gap-2">
-            <p class="text-gray-400 text-center">Memuat pesan...</p>
+        <!-- CHAT BOX -->
+        <div id="chatBox" class="flex-1 overflow-y-auto mb-4 flex flex-col gap-3 pr-2">
+            <p class="text-gray-400 text-center text-sm">Memuat pesan...</p>
         </div>
 
-        <!-- Input Pesan -->
+        <!-- INPUT PESAN -->
         <div class="flex gap-2">
-            <input id="message" placeholder="Ketik pesan..." class="flex-1 p-3 border-2 border-black rounded-lg" maxlength="500">
-            <button onclick="sendMessage()" class="bg-yellow-400 px-6 py-3 border-2 border-black rounded-lg font-bold">Kirim</button>
+            <input id="message" placeholder="Ketik pesan..." class="flex-1 p-3 bg-white focus:outline-none" maxlength="500">
+            <button onclick="sendMessage()" class="bg-yellow-400 px-6 py-3 font-bold">Kirim</button>
         </div>
+
     </div>
 
     <script>
-        const API_KEY = 'ov_7e1415fbebc0a5afed13d32c'; // Ganti pake API Key lu
         const API_URL = '/api/chat';
 
+        // === LOAD PESAN ===
         async function loadMessages() {
             try {
-                const r = await fetch(`${API_URL}?action=history&apikey=${API_KEY}`);
+                const r = await fetch(`${API_URL}?action=history`);
                 const d = await r.json();
                 if (!d.ok) throw new Error(d.error);
 
                 const box = document.getElementById('chatBox');
+                
+                // Simpen posisi scroll (biar nggak lompat ke atas)
+                const isAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 50;
+                
                 box.innerHTML = '';
+
+                if (d.messages.length === 0) {
+                    box.innerHTML = '<p class="text-gray-400 text-center text-sm">Belum ada pesan. Jadi yang pertama!</p>';
+                    return;
+                }
 
                 d.messages.forEach(msg => {
                     const el = document.createElement('div');
-                    el.className = 'p-2 border-b border-gray-200';
-                    el.innerHTML = `<strong>${msg.name}</strong>: ${msg.message}`;
+                    el.className = 'flex flex-col';
+                    
+                    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+                    
+                    el.innerHTML = `
+                        <div class="chat-bubble self-start">
+                            <div class="chat-name">${msg.name} <span class="chat-time">${time}</span></div>
+                            <div>${msg.message}</div>
+                        </div>
+                    `;
                     box.appendChild(el);
                 });
 
-                box.scrollTop = box.scrollHeight;
+                // Auto scroll ke bawah kalo tadinya di bawah
+                if (isAtBottom) box.scrollTop = box.scrollHeight;
+
             } catch (e) {
                 console.error(e);
             }
         }
 
+        // === KIRIM PESAN ===
         async function sendMessage() {
             const name = document.getElementById('name').value.trim();
             const message = document.getElementById('message').value.trim();
-            if (!name || !message) return alert('Isi nama dan pesan!');
+            
+            if (!name) return alert('Isi nama kamu dulu!');
+            if (!message) return alert('Pesan nggak boleh kosong!');
 
             try {
-                const r = await fetch(`${API_URL}?action=send&apikey=${API_KEY}`, {
+                const r = await fetch(`${API_URL}?action=send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, message })
@@ -77,6 +152,11 @@
                 alert('Gagal kirim: ' + e.message);
             }
         }
+
+        // Enter buat kirim
+        document.getElementById('message').addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendMessage();
+        });
 
         // Load tiap 3 detik
         setInterval(loadMessages, 3000);
