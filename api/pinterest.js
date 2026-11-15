@@ -2,7 +2,7 @@ import { useQuota, refund } from './_db.js';
 
 export default async function handler(req, res) {
     const q = String(req.query.q || '').trim();
-    const limit = Math.min(parseInt(req.query.limit) || 5, 20); // Default 5, maks 20
+    const limit = Math.min(parseInt(req.query.limit) || 10, 20);
 
     if (!q) {
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,20 +13,43 @@ export default async function handler(req, res) {
     if (!quota) return;
 
     try {
-        const apiUrl = `https://api.azbry.com/api/search/pinterest?q=${encodeURIComponent(q)}`;
-        const r = await fetch(apiUrl);
-        const j = await r.json();
+        // === DAFTAR API PINTEREST (MULTIPLE FALLBACK) ===
+        const APIS = [
+            `https://api.azbry.com/api/search/pinterest?q=${encodeURIComponent(q)}`,
+            `https://api.termai.cc/api/search/pinterest?q=${encodeURIComponent(q)}`,
+            `https://my.izuka-api.xyz/api/search/pinterest?q=${encodeURIComponent(q)}`,
+            `https://api.nyxs.pw/search/pinterest?q=${encodeURIComponent(q)}`
+        ];
 
-        let images = [];
-        if (j.result && Array.isArray(j.result)) {
-            images = j.result.map(item => item.url || item.image || item).filter(Boolean);
-        } else if (j.data && Array.isArray(j.data)) {
-            images = j.data.map(item => item.url || item.image || item).filter(Boolean);
-        } else if (Array.isArray(j)) {
-            images = j.map(item => item.url || item.image || item).filter(Boolean);
+        let allImages = [];
+
+        // Nembak semua API (paralel)
+        const results = await Promise.allSettled(
+            APIS.map(url => fetch(url).then(r => r.json()))
+        );
+
+        // Gabungin hasil dari semua API
+        for (const result of results) {
+            if (result.status === 'fulfilled' && result.value) {
+                const j = result.value;
+                let imgs = [];
+                
+                if (j.result && Array.isArray(j.result)) {
+                    imgs = j.result.map(item => item.url || item.image || item).filter(Boolean);
+                } else if (j.data && Array.isArray(j.data)) {
+                    imgs = j.data.map(item => item.url || item.image || item).filter(Boolean);
+                } else if (Array.isArray(j)) {
+                    imgs = j.map(item => item.url || item.image || item).filter(Boolean);
+                }
+
+                allImages = [...allImages, ...imgs];
+            }
         }
 
-        if (images.length === 0) {
+        // Hapus duplikat
+        allImages = [...new Set(allImages)];
+
+        if (allImages.length === 0) {
             await refund(quota);
             return res.status(502).json({ ok: false, error: 'Gambar tidak ditemukan' });
         }
@@ -35,13 +58,14 @@ export default async function handler(req, res) {
         return res.status(200).json({
             ok: true,
             title: 'Pinterest Media',
-            thumbnail: images[0],
+            thumbnail: allImages[0],
             type: 'image',
-            downloads: images.slice(0, limit).map(url => ({
+            downloads: allImages.slice(0, limit).map(url => ({
                 type: 'image',
                 url: url,
                 thumbnail: url
             })),
+            total_found: allImages.length,
             plan: quota.info.plan,
             limit: quota.limit,
             remaining: quota.remaining
