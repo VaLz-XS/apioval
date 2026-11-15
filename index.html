@@ -437,7 +437,10 @@ const EPS = [
     sample:'/api/brat?text=halo+dunia&apikey=KEY' },
   { id:'play', name:'Play YouTube', method:'GET', path:'/api/play', param:'q',
     desc:'Cari lagu di YouTube dan dapatkan link video serta thumbnail.', ph:'Judul lagu...',
-    sample:'/api/play?q=komang&apikey=KEY' }
+    sample:'/api/play?q=komang&apikey=KEY' },
+  { id:'iqc', name:'Fake Quote iOS', method:'GET', path:'/api/iqc', param:'text',
+    desc:'Bikin gambar quote elegan bergaya iOS (background putih, font elegan).', ph:'Teks quote...',
+    sample:'/api/iqc?text=Halo+dunia&apikey=KEY' }
 ];
 
 function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
