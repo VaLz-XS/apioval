@@ -481,6 +481,31 @@ function buildEps(){
 
           if(d.title) out.append(el('p','',d.title));
 
+          // KALO ADA THUMBNAIL (BUAT PLAY YOUTUBE)
+          if(d.thumbnail){
+            const img = el('img'); img.src = d.thumbnail; img.alt = 'Thumbnail';
+            out.append(img);
+          }
+
+          // KALO ADA AUDIO (BUAT PLAY YOUTUBE)
+          if(d.audio){
+            const au = el('audio'); au.controls = true; au.src = d.audio;
+            out.append(au);
+            const ra = el('div','row'); ra.style.marginTop = '10px';
+            ra.append(link('Buka MP3', d.audio, 'w'));
+            out.append(ra);
+          }
+
+          // KALO ADA VIDEO (BUAT TIKTOK)
+          if(d.video){
+            const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
+            out.append(vd);
+            const rv = el('div','row'); rv.style.marginTop = '10px';
+            rv.append(link('Buka Video', d.video));
+            out.append(rv);
+          }
+
+          // KALO ADA FOTO SLIDESHOW (BUAT TIKTOK FOTO)
           if(d.type === 'image' && d.images && d.images.length){
             const g = el('div','imgs');
             d.images.forEach((src, i) => {
@@ -490,21 +515,8 @@ function buildEps(){
             });
             out.append(g);
             out.append(el('p','','Ketuk foto buat buka ukuran penuh, lalu tahan buat simpan. Total: ' + d.images.length + ' foto.'));
-          } else if(d.video){
-            const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
-            out.append(vd);
-            const rv = el('div','row'); rv.style.marginTop = '10px';
-            rv.append(link('Buka Video', d.video));
-            out.append(rv);
           }
 
-          if(d.music){
-            const au = el('audio'); au.controls = true; au.src = d.music;
-            out.append(au);
-            const ra = el('div','row'); ra.style.marginTop = '10px';
-            ra.append(link('Buka MP3', d.music, 'w'));
-            out.append(ra);
-          }
           msg(m,'Berhasil.' + (d.remaining >= 0 ? ' Sisa limit: ' + d.remaining : ''));
         }
         out.classList.remove('hide');
