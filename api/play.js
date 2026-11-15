@@ -6,21 +6,21 @@ export default async function handler(req, res) {
     if (!q) return res.status(400).json({ ok: false, error: 'Query kosong' })
 
     try {
-        // 1. Cari video
+        // 1. Cari video pakai yt-search (PERSIS KODE LU)
         const search = await yts(q)
         if (!search.videos.length) {
             return res.status(502).json({ ok: false, error: 'Video tidak ditemukan' })
         }
         const video = search.videos[0]
 
-        // 2. Download MP3 (biar dapet link audio)
+        // 2. Download MP3 (PERSIS KODE LU)
         const mp3 = await ytScraper.ytmp3(video.url)
 
         if (!mp3.status || !mp3.download || !mp3.download.url) {
-            return res.status(502).json({ ok: false, error: 'Gagal ambil audio' })
+            return res.status(502).json({ ok: false, error: 'Gagal mengambil audio' })
         }
 
-        // 3. Balikin JSON (LENGKAP: ada video & audio)
+        // 3. Balikin JSON (video, thumbnail, audio)
         return res.status(200).json({
             ok: true,
             title: video.title,
@@ -28,8 +28,8 @@ export default async function handler(req, res) {
             duration: video.duration.timestamp,
             views: video.views,
             thumbnail: video.thumbnail,
-            video: video.url,          // <--- Link YouTube
-            music: mp3.download.url    // <--- Link MP3
+            video: video.url,
+            audio: mp3.download.url  // <--- INI LINK MP3 NYA
         })
 
     } catch (e) {
