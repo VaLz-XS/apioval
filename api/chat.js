@@ -1,10 +1,6 @@
-import { useQuota, refund } from './_db.js';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-// === INISIALISASI FIREBASE (PAKE SERVICE ACCOUNT) ===
-// Lu harus bikin Service Account di Firebase Console → Project Settings → Service Accounts → Generate New Private Key
-// Simpen isi JSON-nya di Environment Variable Vercel: FIREBASE_SERVICE_ACCOUNT
 let db = null;
 if (!db) {
     try {
@@ -26,15 +22,12 @@ export default async function handler(req, res) {
     }
 
     const action = String(req.query.action || '').trim();
-    const quota = await useQuota(req, res);
-    if (!quota) return;
 
     try {
         // === 1. KIRIM PESAN ===
         if (action === 'send' && req.method === 'POST') {
             const { name, message } = req.body || {};
             if (!name || !message) {
-                await refund(quota);
                 return res.status(400).json({ ok: false, error: 'name dan message wajib diisi' });
             }
 
@@ -67,17 +60,13 @@ export default async function handler(req, res) {
 
             return res.status(200).json({
                 ok: true,
-                messages: messages.reverse(), // Urut dari lama ke baru
-                plan: quota.info.plan,
-                limit: quota.limit,
-                remaining: quota.remaining
+                messages: messages.reverse()
             });
         }
 
         return res.status(400).json({ ok: false, error: 'action tidak dikenal' });
 
     } catch (e) {
-        await refund(quota);
         return res.status(500).json({ ok: false, error: e.message });
     }
 }
