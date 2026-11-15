@@ -444,7 +444,10 @@ const EPS = [
     sample:'/api/iqc?text=Halo+dunia&apikey=KEY' },
   { id:'lyrics', name:'Lyrics Finder', method:'GET', path:'/api/lyrics', param:'artist', param2:'title',
     desc:'Cari lirik lagu berdasarkan nama artis dan judul lagu.', ph:'Nama Artis...', ph2:'Judul Lagu...',
-    sample:'/api/lyrics?artist=Ed+Sheeran&title=Perfect&apikey=KEY' }
+    sample:'/api/lyrics?artist=Ed+Sheeran&title=Perfect&apikey=KEY' },
+  { id:'instagram', name:'Instagram Downloader', method:'GET', path:'/api/instagram', param:'url',
+    desc:'Download video/foto Instagram (Reels, Post, IGTV).', ph:'Link Instagram...',
+    sample:'/api/instagram?url=LINK_IG&apikey=KEY' }
 ];
 
 function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
@@ -547,6 +550,22 @@ function buildEps(){
           if(d.lyrics){
             const pre = el('pre'); pre.textContent = d.lyrics;
             out.append(pre);
+          }
+
+          // KALO ADA DOWNLOADS (BUAT INSTAGRAM)
+          if(d.downloads && d.downloads.length){
+            const g = el('div','imgs');
+            d.downloads.forEach((dl, i) => {
+              if (dl.type === 'video') {
+                const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = dl.url;
+                out.append(vd);
+              } else {
+                const a = el('a'); a.href = dl.url; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Media ' + (i + 1);
+                const im = el('img'); im.src = dl.thumbnail; im.loading = 'lazy'; im.alt = 'Media ' + (i + 1);
+                a.appendChild(im); g.appendChild(a);
+              }
+            });
+            if (g.children.length > 0) out.append(g);
           }
 
           msg(m,'Berhasil.' + (d.remaining >= 0 ? ' Sisa limit: ' + d.remaining : ''));
