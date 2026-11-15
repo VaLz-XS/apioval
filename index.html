@@ -107,6 +107,7 @@ video,.out img{width:100%;border:2.5px solid var(--ink);border-radius:12px;backg
 video{background:#000}
 audio{width:100%;margin-top:12px}
 .out p{margin:10px 0;word-break:break-word}
+.out pre{background:#f4f1e4;border:1.5px solid var(--ink);border-radius:8px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-word;margin-top:10px;max-height:400px;overflow-y:auto}
 .imgs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
 .imgs a{display:block;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;box-shadow:2px 2px 0 var(--ink)}
 .imgs img{display:block;width:100%;height:150px;margin:0;border:0;border-radius:0;object-fit:cover}
@@ -440,7 +441,10 @@ const EPS = [
     sample:'/api/play?q=komang&apikey=KEY' },
   { id:'iqc', name:'Fake Quote iOS', method:'GET', path:'/api/iqc', param:'text',
     desc:'Bikin gambar quote elegan bergaya iOS (background putih, font elegan).', ph:'Teks quote...',
-    sample:'/api/iqc?text=Halo+dunia&apikey=KEY' }
+    sample:'/api/iqc?text=Halo+dunia&apikey=KEY' },
+  { id:'lyrics', name:'Lyrics Finder', method:'GET', path:'/api/lyrics', param:'artist', param2:'title',
+    desc:'Cari lirik lagu berdasarkan nama artis dan judul lagu.', ph:'Nama Artis...', ph2:'Judul Lagu...',
+    sample:'/api/lyrics?artist=Ed+Sheeran&title=Perfect&apikey=KEY' }
 ];
 
 function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
@@ -452,24 +456,43 @@ function buildEps(){
     const c = el('section','card');
     c.append(el('h2','',ep.name), el('div','sub',ep.method + ' ' + ep.path), el('p','',ep.desc));
     c.append(el('div','ex',location.origin + ep.sample));
-    const inp = el('input'); inp.placeholder = ep.ph; if(ep.param === 'url') inp.type = 'url';
+    
+    // Input pertama
+    const inp = el('input'); inp.placeholder = ep.ph; 
+    if(ep.param === 'url') inp.type = 'url';
+    c.append(inp);
+
+    // Input kedua (KALO ADA param2)
+    let inp2 = null;
+    if (ep.param2) {
+        inp2 = el('input'); inp2.placeholder = ep.ph2;
+        c.append(inp2);
+    }
+
     const row = el('div','row');
     const bp = el('button','w','Paste'), bg = el('button','y','Coba');
     row.append(bp, bg);
     const m = el('div','msg'), out = el('div','out hide');
-    c.append(inp, row, m, out);
+    c.append(row, m, out);
     box.appendChild(c);
 
     bp.onclick = async () => { try{ inp.value = await navigator.clipboard.readText(); }catch(e){ msg(m,'Gagal baca clipboard.', true); } };
 
     const run = async () => {
       const k = getK(), v = inp.value.trim();
+      const v2 = inp2 ? inp2.value.trim() : '';
+      
       if(!k){ msg(m,'Buat API key dulu di Beranda.', true); return; }
       if(!v){ msg(m,'Isi dulu inputnya.', true); return; }
+      if(ep.param2 && !v2){ msg(m,'Isi kedua inputnya.', true); return; }
+      
       bg.disabled = true; out.classList.add('hide'); out.innerHTML = '';
       msg(m,'Memproses...');
       try{
-        const u = ep.path + '?' + ep.param + '=' + encodeURIComponent(v) + '&apikey=' + encodeURIComponent(k);
+        let u = ep.path + '?' + ep.param + '=' + encodeURIComponent(v);
+        if(ep.param2) u += '&' + ep.param2 + '=' + encodeURIComponent(v2);
+        u += '&apikey=' + encodeURIComponent(k);
+        
         const r = await fetch(u);
         const ct = r.headers.get('content-type') || '';
         if(ct.includes('image')){
@@ -484,13 +507,13 @@ function buildEps(){
 
           if(d.title) out.append(el('p','',d.title));
 
-          // KALO ADA THUMBNAIL (BUAT PLAY YOUTUBE)
+          // KALO ADA THUMBNAIL
           if(d.thumbnail){
             const img = el('img'); img.src = d.thumbnail; img.alt = 'Thumbnail';
             out.append(img);
           }
 
-          // KALO ADA AUDIO (BUAT PLAY YOUTUBE)
+          // KALO ADA AUDIO
           if(d.audio){
             const au = el('audio'); au.controls = true; au.src = d.audio;
             out.append(au);
@@ -499,7 +522,7 @@ function buildEps(){
             out.append(ra);
           }
 
-          // KALO ADA VIDEO (BUAT TIKTOK)
+          // KALO ADA VIDEO
           if(d.video){
             const vd = el('video'); vd.controls = true; vd.playsInline = true; vd.src = d.video;
             out.append(vd);
@@ -508,7 +531,7 @@ function buildEps(){
             out.append(rv);
           }
 
-          // KALO ADA FOTO SLIDESHOW (BUAT TIKTOK FOTO)
+          // KALO ADA FOTO SLIDESHOW
           if(d.type === 'image' && d.images && d.images.length){
             const g = el('div','imgs');
             d.images.forEach((src, i) => {
@@ -520,6 +543,12 @@ function buildEps(){
             out.append(el('p','','Ketuk foto buat buka ukuran penuh, lalu tahan buat simpan. Total: ' + d.images.length + ' foto.'));
           }
 
+          // KALO ADA LIRIK (BUAT LYRICS)
+          if(d.lyrics){
+            const pre = el('pre'); pre.textContent = d.lyrics;
+            out.append(pre);
+          }
+
           msg(m,'Berhasil.' + (d.remaining >= 0 ? ' Sisa limit: ' + d.remaining : ''));
         }
         out.classList.remove('hide');
@@ -529,6 +558,7 @@ function buildEps(){
     };
     bg.onclick = run;
     inp.addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
+    if(inp2) inp2.addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
   });
 }
 
