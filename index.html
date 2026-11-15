@@ -447,7 +447,10 @@ const EPS = [
     sample:'/api/lyrics?artist=Ed+Sheeran&title=Perfect&apikey=KEY' },
   { id:'instagram', name:'Instagram Downloader', method:'GET', path:'/api/instagram', param:'url',
     desc:'Download video/foto Instagram (Reels, Post, IGTV).', ph:'Link Instagram...',
-    sample:'/api/instagram?url=LINK_IG&apikey=KEY' }
+    sample:'/api/instagram?url=LINK_IG&apikey=KEY' },
+  { id:'pinterest', name:'Pinterest Downloader', method:'GET', path:'/api/pinterest', param:'q',
+    desc:'Cari & download gambar/video Pinterest berdasarkan kata kunci.', ph:'Kata kunci (misal: anime estetik)...',
+    sample:'/api/pinterest?q=anime+estetik&apikey=KEY' }
 ];
 
 function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt) e.textContent = txt; return e; }
@@ -552,7 +555,7 @@ function buildEps(){
             out.append(pre);
           }
 
-          // KALO ADA DOWNLOADS (BUAT INSTAGRAM)
+          // KALO ADA DOWNLOADS (BUAT INSTAGRAM / PINTEREST)
           if(d.downloads && d.downloads.length){
             const g = el('div','imgs');
             d.downloads.forEach((dl, i) => {
@@ -561,7 +564,7 @@ function buildEps(){
                 out.append(vd);
               } else {
                 const a = el('a'); a.href = dl.url; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Media ' + (i + 1);
-                const im = el('img'); im.src = dl.thumbnail; im.loading = 'lazy'; im.alt = 'Media ' + (i + 1);
+                const im = el('img'); im.src = dl.thumbnail || dl.url; im.loading = 'lazy'; im.alt = 'Media ' + (i + 1);
                 a.appendChild(im); g.appendChild(a);
               }
             });
