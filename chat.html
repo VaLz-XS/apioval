@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Global Chat - Apioval</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    body { font-family: 'Space Grotesk', sans-serif; background: #0a5aa8; }
+    .chat-bubble { border: 2.5px solid #0b1b33; border-radius: 12px; box-shadow: 3px 3px 0 #0b1b33; background: #fff; }
+</style>
+</head>
+<body class="p-4">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-white mb-4">💬 Global Chat</h1>
+        
+        <!-- Input Nama -->
+        <div class="mb-4">
+            <input id="name" placeholder="Nama lu..." class="w-full p-3 border-2 border-black rounded-lg" maxlength="30">
+        </div>
+
+        <!-- Chat Box -->
+        <div id="chatBox" class="chat-bubble p-4 h-96 overflow-y-auto mb-4 flex flex-col gap-2">
+            <p class="text-gray-400 text-center">Memuat pesan...</p>
+        </div>
+
+        <!-- Input Pesan -->
+        <div class="flex gap-2">
+            <input id="message" placeholder="Ketik pesan..." class="flex-1 p-3 border-2 border-black rounded-lg" maxlength="500">
+            <button onclick="sendMessage()" class="bg-yellow-400 px-6 py-3 border-2 border-black rounded-lg font-bold">Kirim</button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'ov_7e1415fbebc0a5afed13d32c'; // Ganti pake API Key lu
+        const API_URL = '/api/chat';
+
+        async function loadMessages() {
+            try {
+                const r = await fetch(`${API_URL}?action=history&apikey=${API_KEY}`);
+                const d = await r.json();
+                if (!d.ok) throw new Error(d.error);
+
+                const box = document.getElementById('chatBox');
+                box.innerHTML = '';
+
+                d.messages.forEach(msg => {
+                    const el = document.createElement('div');
+                    el.className = 'p-2 border-b border-gray-200';
+                    el.innerHTML = `<strong>${msg.name}</strong>: ${msg.message}`;
+                    box.appendChild(el);
+                });
+
+                box.scrollTop = box.scrollHeight;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function sendMessage() {
+            const name = document.getElementById('name').value.trim();
+            const message = document.getElementById('message').value.trim();
+            if (!name || !message) return alert('Isi nama dan pesan!');
+
+            try {
+                const r = await fetch(`${API_URL}?action=send&apikey=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, message })
+                });
+                const d = await r.json();
+                if (!d.ok) throw new Error(d.error);
+
+                document.getElementById('message').value = '';
+                loadMessages();
+            } catch (e) {
+                alert('Gagal kirim: ' + e.message);
+            }
+        }
+
+        // Load tiap 3 detik
+        setInterval(loadMessages, 3000);
+        loadMessages();
+    </script>
+</body>
+</html>
