@@ -4,88 +4,191 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Apioval Admin</title>
+<title>Apioval // ADMIN_TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#09090d;--card:#13131a;--line:#24242e;--txt:#f1f1f5;--mut:#8a8a9a;--a:#25f4ee;--b:#fe2c55}
+:root{
+    --bg: #050505;
+    --panel: #0a0f0a;
+    --border: #1a2e1a;
+    --txt: #33ff33; /* Hacker Green */
+    --txt-dim: #1e7a1e;
+    --accent: #ff003c; /* Error Red */
+    --glow: 0 0 5px rgba(51, 255, 51, 0.5);
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;line-height:1.5}
+body{
+    margin:0;
+    background-color: var(--bg);
+    /* Efek Grid ala Hacker */
+    background-image: 
+        linear-gradient(rgba(51, 255, 51, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(51, 255, 51, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--txt);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    text-shadow: var(--glow);
+}
 .wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px}
-h1{font-size:22px;margin:0}
-h1 span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
-h2{font-size:16px;margin:0 0 10px}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
-input,select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0c0c11;color:var(--txt);font-size:14px;outline:none;margin-bottom:8px}
-input:focus,select:focus{border-color:var(--a)}
-button{padding:10px 14px;border:0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#000;background:var(--a)}
-button.sec{background:#22222c;color:var(--txt)}
-button.del{background:#3a1220;color:#ff6b88}
+
+h1{font-size:20px;margin:0;letter-spacing: 2px;}
+h1::before{content: "root@apioval:~# "; color: #fff; text-shadow: none;}
+h2{font-size:14px;margin:0 0 12px; color: #fff; text-shadow: none; border-bottom: 1px dashed var(--txt-dim); padding-bottom: 4px;}
+h2::before{content: "> ";}
+
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;}
+
+.card{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    /* Efek sudut potong ala sci-fi */
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    position: relative;
+}
+
+/* Garis aksen di pojok card */
+.card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 10px; height: 10px;
+    background: var(--txt);
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    border:1px solid var(--txt-dim);
+    background:#000;
+    color:var(--txt);
+    font-family: 'JetBrains Mono', monospace;
+    font-size:13px;
+    outline:none;
+    margin-bottom:10px;
+    transition: all 0.2s;
+}
+input:focus,select:focus{
+    border-color:var(--txt);
+    box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+}
+input::placeholder { color: var(--txt-dim); }
+
+button{
+    padding:10px 14px;
+    border:1px solid var(--txt);
+    background:transparent;
+    color:var(--txt);
+    font-family: 'JetBrains Mono', monospace;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    text-transform: uppercase;
+    transition: all 0.1s;
+}
+button:hover{ background:var(--txt); color:#000; text-shadow:none; box-shadow: 0 0 10px var(--txt); }
+button:active{ transform: scale(0.98); }
+
+button.sec{ border-color: #fff; color: #fff; }
+button.sec:hover{ background: #fff; color: #000; }
+
+button.del{ border-color: var(--accent); color: var(--accent); }
+button.del:hover{ background: var(--accent); color: #000; box-shadow: 0 0 10px var(--accent); text-shadow: none;}
+
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row>*{flex:1}
-.msg{font-size:13px;margin-top:8px;color:var(--mut);min-height:16px}
-.msg.err{color:var(--b)}
-.mono{font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;color:var(--a)}
-.item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#0f0f15}
-.meta{font-size:12px;color:var(--mut);margin:4px 0 8px}
-.stats{display:flex;gap:8px;margin-bottom:14px}
-.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
-.stat b{display:block;font-size:20px}
-.stat small{color:var(--mut)}
+
+.msg{font-size:12px;margin-top:12px;color:var(--txt-dim);min-height:16px;}
+.msg.err{color:var(--accent); text-shadow: 0 0 5px var(--accent);}
+
+.mono{
+    font-size:12px;
+    word-break:break-all;
+    color: #fff;
+    background: #000;
+    padding: 8px;
+    border-left: 3px solid var(--txt);
+}
+
+.item{
+    border:1px solid var(--border);
+    padding:12px;
+    margin-bottom:12px;
+    background:#020502;
+}
+.item:hover { border-color: var(--txt-dim); }
+
+.meta{font-size:11px;color:var(--txt-dim);margin:8px 0;}
+
+.stats{display:flex;gap:12px;margin-bottom:16px}
+.stat{flex:1;background:var(--panel);border:1px solid var(--border);padding:12px; text-align: center;}
+.stat b{display:block;font-size:24px; color: #fff;}
+.stat small{color:var(--txt-dim); text-transform: uppercase; font-size: 10px;}
+
 .hide{display:none}
+
+/* Kursor berkedip */
+.blink { animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
 <body>
 <div class="wrap">
 
+<!-- LOGIN VIEW -->
 <div id="loginView" style="max-width:380px;margin:60px auto 0">
-  <h1 style="margin-bottom:14px">Apioval <span>Admin</span></h1>
+  <h1 style="margin-bottom:20px">ACCESS_DENIED<span class="blink">_</span></h1>
   <div class="card">
-    <input id="u" placeholder="Username" autocomplete="username">
-    <input id="p" type="password" placeholder="Password" autocomplete="current-password">
-    <button id="btnLogin" style="width:100%">Login</button>
+    <input id="u" placeholder="[ENTER USERNAME]" autocomplete="username">
+    <input id="p" type="password" placeholder="[ENTER PASSWORD]" autocomplete="current-password">
+    <button id="btnLogin" style="width:100%">AUTHENTICATE</button>
     <div class="msg" id="loginMsg"></div>
   </div>
 </div>
 
+<!-- PANEL VIEW -->
 <div id="panelView" class="hide">
   <div class="top">
-    <h1>Apioval <span>Admin</span></h1>
-    <button class="sec" id="btnLogout">Logout</button>
+    <h1>API_ADMIN_PANEL<span class="blink">_</span></h1>
+    <button class="del" id="btnLogout">LOGOUT</button>
   </div>
 
   <div class="card">
-    <h2>Key Admin (unlimited)</h2>
+    <h2>SYS_ADMIN_KEY</h2>
     <div class="mono" id="adminKey">-</div>
-    <div class="row" style="margin-top:10px"><button class="sec" id="copyAdmin">Copy</button></div>
+    <div class="row" style="margin-top:10px"><button class="sec" id="copyAdmin">COPY_TO_CLIPBOARD</button></div>
   </div>
 
   <div class="stats">
-    <div class="stat"><b id="sTotal">0</b><small>Total key</small></div>
-    <div class="stat"><b id="sUsed">0</b><small>Request hari ini</small></div>
+    <div class="stat"><b id="sTotal">0</b><small>Total Keys</small></div>
+    <div class="stat"><b id="sUsed">0</b><small>Req Today</small></div>
   </div>
 
   <div class="card">
-    <h2>Buat Key Baru</h2>
-    <input id="newName" maxlength="30" placeholder="Nama (opsional)">
+    <h2>GENERATE_NEW_KEY</h2>
+    <input id="newName" maxlength="30" placeholder="[IDENTIFIER (OPTIONAL)]">
     <select id="newPlan"></select>
-    <button id="btnCreate" style="width:100%">Buat Key</button>
+    <button id="btnCreate" style="width:100%">EXECUTE_GENERATE</button>
     <div class="msg" id="createMsg"></div>
   </div>
 
   <div class="card">
-    <h2>Daftar API Key</h2>
-    <button class="sec" id="btnReload" style="margin-bottom:10px">Muat Ulang</button>
+    <h2>DATABASE_KEYS</h2>
+    <button class="sec" id="btnReload" style="margin-bottom:15px; width: 100%;">REFRESH_DATABASE</button>
     <div id="list"></div>
     <div class="msg" id="listMsg"></div>
   </div>
 
   <div class="card">
-    <h2>Ganti Username / Password</h2>
-    <input id="cu" placeholder="Username sekarang" autocomplete="username">
-    <input id="cp" type="password" placeholder="Password sekarang" autocomplete="current-password">
-    <input id="nu" placeholder="Username baru (kosongkan kalau tetap)">
-    <input id="np" type="password" placeholder="Password baru (min 8 karakter)" autocomplete="new-password">
-    <button id="btnPass" style="width:100%">Simpan</button>
+    <h2>CREDENTIAL_UPDATE</h2>
+    <input id="cu" placeholder="[CURRENT USERNAME]" autocomplete="username">
+    <input id="cp" type="password" placeholder="[CURRENT PASSWORD]" autocomplete="current-password">
+    <input id="nu" placeholder="[NEW USERNAME (LEAVE BLANK)]">
+    <input id="np" type="password" placeholder="[NEW PASSWORD (MIN 8 CHARS)]" autocomplete="new-password">
+    <button id="btnPass" style="width:100%">UPDATE_CREDENTIALS</button>
     <div class="msg" id="passMsg"></div>
   </div>
 </div>
@@ -125,12 +228,12 @@ function showPanel(){
 
 $('btnLogin').onclick = async () => {
   $('btnLogin').disabled = true;
-  msg('loginMsg','Masuk...');
+  msg('loginMsg','AUTHENTICATING...');
   try{
     const d = await api({action:'login', username:$('u').value.trim(), password:$('p').value});
     T = d.token;
     try{ sessionStorage.setItem('ov_admin', T); sessionStorage.setItem('ov_adminkey', d.adminKey||''); }catch(e){}
-    $('adminKey').textContent = d.adminKey || '(ADMIN_KEY belum diset)';
+    $('adminKey').textContent = d.adminKey || '(!) ADMIN_KEY_NOT_SET';
     $('cu').value = $('u').value.trim();
     $('p').value = '';
     msg('loginMsg','');
@@ -146,17 +249,17 @@ $('btnLogout').onclick = async () => {
 };
 
 $('copyAdmin').onclick = async () => {
-  try{ await navigator.clipboard.writeText($('adminKey').textContent); msg('createMsg','Key admin tersalin.'); }
-  catch(e){ msg('createMsg','Gagal copy.', true); }
+  try{ await navigator.clipboard.writeText($('adminKey').textContent); msg('createMsg','KEY_COPIED_TO_CLIPBOARD.'); }
+  catch(e){ msg('createMsg','COPY_FAILED.', true); }
 };
 
 function fillPlans(sel, selected){
   sel.innerHTML = '';
-  PLAN_LIST.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=p; if(p===selected) o.selected=true; sel.appendChild(o); });
+  PLAN_LIST.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=p.toUpperCase(); if(p===selected) o.selected=true; sel.appendChild(o); });
 }
 
 async function load(){
-  msg('listMsg','Memuat...');
+  msg('listMsg','FETCHING_DATA...');
   try{
     const d = await api({action:'list'});
     PLAN_LIST = Object.keys(d.limits);
@@ -164,26 +267,26 @@ async function load(){
     $('sTotal').textContent = d.items.length;
     $('sUsed').textContent = d.items.reduce((a,i)=>a+i.used,0);
     const box = $('list'); box.innerHTML = '';
-    if(!d.items.length){ msg('listMsg','Belum ada key.'); return; }
+    if(!d.items.length){ msg('listMsg','(!) NO_KEYS_FOUND.'); return; }
     d.items.forEach(it => {
       const el = document.createElement('div'); el.className='item';
       const k = document.createElement('div'); k.className='mono'; k.textContent = it.key;
       const m = document.createElement('div'); m.className='meta';
       const lim = d.limits[it.plan];
-      m.textContent = (it.name ? it.name + ' • ' : '') + 'Hari ini: ' + it.used + ' / ' + (lim === -1 ? '∞' : lim) + (it.created ? ' • ' + new Date(it.created).toLocaleDateString('id-ID') : '');
+      m.textContent = '[' + (it.name ? it.name.toUpperCase() : 'NO_NAME') + '] | USED: ' + it.used + ' / ' + (lim === -1 ? 'UNLIMITED' : lim) + (it.created ? ' | DATE: ' + new Date(it.created).toLocaleDateString('id-ID') : '');
       const row = document.createElement('div'); row.className='row';
       const sel = document.createElement('select'); sel.style.marginBottom='0'; fillPlans(sel, it.plan);
-      const bs = document.createElement('button'); bs.textContent='Simpan';
-      const bc = document.createElement('button'); bc.className='sec'; bc.textContent='Copy';
-      const bd = document.createElement('button'); bd.className='del'; bd.textContent='Hapus';
-      bs.onclick = async () => { try{ await api({action:'setplan', key:it.key, plan:sel.value}); msg('listMsg','Plan diubah.'); load(); }catch(e){ msg('listMsg', e.message, true); } };
-      bc.onclick = async () => { try{ await navigator.clipboard.writeText(it.key); msg('listMsg','Tersalin.'); }catch(e){} };
-      bd.onclick = async () => { if(!confirm('Hapus key ini?')) return; try{ await api({action:'delete', key:it.key}); load(); }catch(e){ msg('listMsg', e.message, true); } };
+      const bs = document.createElement('button'); bs.textContent='SAVE';
+      const bc = document.createElement('button'); bc.className='sec'; bc.textContent='COPY';
+      const bd = document.createElement('button'); bd.className='del'; bd.textContent='DELETE';
+      bs.onclick = async () => { try{ await api({action:'setplan', key:it.key, plan:sel.value}); msg('listMsg','PLAN_UPDATED.'); load(); }catch(e){ msg('listMsg', e.message, true); } };
+      bc.onclick = async () => { try{ await navigator.clipboard.writeText(it.key); msg('listMsg','KEY_COPIED.'); }catch(e){} };
+      bd.onclick = async () => { if(!confirm('CONFIRM_DELETE_KEY?')) return; try{ await api({action:'delete', key:it.key}); load(); }catch(e){ msg('listMsg', e.message, true); } };
       row.append(sel, bs, bc, bd);
       el.append(k, m, row);
       box.appendChild(el);
     });
-    msg('listMsg','');
+    msg('listMsg','DATA_LOADED_SUCCESSFULLY.');
   }catch(e){ msg('listMsg', e.message, true); }
 }
 $('btnReload').onclick = load;
@@ -191,7 +294,7 @@ $('btnReload').onclick = load;
 $('btnCreate').onclick = async () => {
   try{
     const d = await api({action:'create', name:$('newName').value.trim(), plan:$('newPlan').value});
-    msg('createMsg', 'Dibuat: ' + d.key);
+    msg('createMsg', 'GENERATED: ' + d.key);
     $('newName').value='';
     load();
   }catch(e){ msg('createMsg', e.message, true); }
@@ -200,7 +303,7 @@ $('btnCreate').onclick = async () => {
 $('btnPass').onclick = async () => {
   try{
     await api({action:'changepass', username:$('cu').value.trim(), current:$('cp').value, newUsername:$('nu').value.trim(), newPassword:$('np').value});
-    msg('passMsg','Berhasil diganti. Pakai yang baru saat login berikutnya.');
+    msg('passMsg','CREDENTIALS_UPDATED_SUCCESSFULLY.');
     $('cp').value=''; $('np').value=''; $('nu').value='';
   }catch(e){ msg('passMsg', e.message, true); }
 };
