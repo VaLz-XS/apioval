@@ -1,26 +1,37 @@
-import yts from 'yt-search'
-import ytScraper from '@denzy-official/youtube_scraper'
+import { useQuota, refund } from './_db.js';
+import yts from 'yt-search';
+import ytScraper from '@denzy-official/youtube_scraper';
 
 export default async function handler(req, res) {
-    const q = req.query.q || ''
-    if (!q) return res.status(400).json({ ok: false, error: 'Query kosong' })
+    // 1. Ambil query
+    const q = String(req.query.q || '').trim();
+    if (!q) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        return res.status(400).json({ ok: false, error: 'q kosong' });
+    }
+
+    // 2. CEK KUOTA (INI YANG KURANG TADI!)
+    const quota = await useQuota(req, res);
+    if (!quota) return;
 
     try {
-        // 1. Cari video pakai yt-search (PERSIS KODE LU)
-        const search = await yts(q)
+        // 3. Cari video
+        const search = await yts(q);
         if (!search.videos.length) {
-            return res.status(502).json({ ok: false, error: 'Video tidak ditemukan' })
+            await refund(quota);
+            return res.status(502).json({ ok: false, error: 'Video tidak ditemukan' });
         }
-        const video = search.videos[0]
+        const video = search.videos[0];
 
-        // 2. Download MP3 (PERSIS KODE LU)
-        const mp3 = await ytScraper.ytmp3(video.url)
+        // 4. Download MP3
+        const mp3 = await ytScraper.ytmp3(video.url);
 
         if (!mp3.status || !mp3.download || !mp3.download.url) {
-            return res.status(502).json({ ok: false, error: 'Gagal mengambil audio' })
+            await refund(quota);
+            return res.status(502).json({ ok: false, error: 'Gagal mengambil audio' });
         }
 
-        // 3. Balikin JSON (video, thumbnail, audio)
+        // 5. Balikin JSON (LENGKAP)
         return res.status(200).json({
             ok: true,
             title: video.title,
@@ -28,11 +39,14 @@ export default async function handler(req, res) {
             duration: video.duration.timestamp,
             views: video.views,
             thumbnail: video.thumbnail,
-            video: video.url,
-            audio: mp3.download.url  // <--- INI LINK MP3 NYA
-        })
+            audio: mp3.download.url,
+            plan: quota.info.plan,
+            limit: quota.limit,
+            remaining: quota.remaining
+        });
 
     } catch (e) {
-        return res.status(500).json({ ok: false, error: e.message })
+        await refund(quota);
+        return res.status(500).json({ ok: false, error: e.message });
     }
 }
