@@ -28,7 +28,6 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin 8s linear infinite; }
         
-        /* Progress bar custom */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -112,7 +111,6 @@
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
                     </button>
                 </div>
-                <!-- Progress Bar -->
                 <div class="w-full flex items-center gap-2 text-xs text-gray-400">
                     <span id="currentTime">0:00</span>
                     <input type="range" id="seekBar" min="0" max="100" value="0" class="w-full">
@@ -124,18 +122,15 @@
         </div>
     </div>
 
-    <!-- Audio Element (Tersembunyi) -->
     <audio id="audioPlayer"></audio>
 
     <script>
         let currentVideoId = '';
         let isPlaying = false;
-        let isAudioReady = false;
         
         const audio = document.getElementById('audioPlayer');
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-        // === PENCARIAN ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -210,7 +205,7 @@
             }
         }, 500));
 
-        // === PLAY LAGU (AUDIO STREAM) ===
+        // === PLAY LAGU (COBALT API) ===
         async function playSong(videoId, title, author, thumb) {
             const miniPlayer = document.getElementById('miniPlayer');
             const iconPlay = document.getElementById('iconPlay');
@@ -222,7 +217,6 @@
             document.getElementById('playerThumb').src = thumb;
             miniPlayer.classList.remove('translate-y-full');
 
-            // UI Loading
             iconPlay.classList.add('hidden');
             iconPause.classList.add('hidden');
             iconLoading.classList.remove('hidden');
@@ -230,19 +224,32 @@
             currentVideoId = videoId;
 
             try {
-                // Ambil link audio stream (pakai Piped API / Cobalt)
-                // Kita pakai instance Piped yang stabil
-                const apiUrl = `https://pipedapi.kavin.rocks/streams/${videoId}`;
-                const res = await fetch(CORS_PROXY + encodeURIComponent(apiUrl));
+                // PAKAI COBALT API BUAT NGAMBIL LINK AUDIO
+                const cobaltUrl = 'https://api.cobalt.tools/';
+                const res = await fetch(cobaltUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: `https://www.youtube.com/watch?v=${videoId}`,
+                        downloadMode: 'audio',
+                        audioFormat: 'mp3'
+                    })
+                });
+
                 const data = await res.json();
 
-                // Cari stream audio (m4a/webm)
-                const audioStream = data.audioStreams.find(a => a.mimeType.includes('audio/mp4') || a.mimeType.includes('audio/webm'));
-                
-                if (!audioStream) throw new Error('Audio stream tidak ditemukan.');
+                if (data.status === 'error') {
+                    throw new Error(data.error?.code || 'Gagal ambil audio dari Cobalt');
+                }
 
-                // Set src dan play
-                audio.src = CORS_PROXY + encodeURIComponent(audioStream.url);
+                // Cobalt ngasih link audio (bisa direct atau tunnel)
+                const audioUrl = data.url || data.audio;
+                if (!audioUrl) throw new Error('Link audio tidak ditemukan.');
+
+                audio.src = audioUrl;
                 await audio.play();
 
                 iconLoading.classList.add('hidden');
@@ -257,7 +264,6 @@
             }
         }
 
-        // === KONTROL AUDIO ===
         document.getElementById('playBtn').addEventListener('click', () => {
             if (audio.paused) audio.play();
             else audio.pause();
@@ -273,7 +279,6 @@
             currentVideoId = '';
         });
 
-        // === EVENT AUDIO ===
         audio.addEventListener('play', () => {
             document.getElementById('iconPlay').classList.add('hidden');
             document.getElementById('iconPause').classList.remove('hidden');
@@ -298,7 +303,6 @@
             }
         });
 
-        // Seek bar
         document.getElementById('seekBar').addEventListener('input', (e) => {
             if (audio.duration) {
                 audio.currentTime = (e.target.value / 100) * audio.duration;
