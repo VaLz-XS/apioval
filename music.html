@@ -16,6 +16,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            padding-bottom: 70px; /* Ruang buat Nav Bawah & Mini Player */
         }
 
         .text-spotify { color: #1DB954; }
@@ -68,10 +69,10 @@
 </head>
 <body>
 
-    <!-- CONTAINER UTAMA (Sidebar + Main Content) -->
+    <!-- CONTAINER UTAMA -->
     <div class="flex-1 flex overflow-hidden relative">
         
-        <!-- SIDEBAR (Desktop) -->
+        <!-- SIDEBAR (Desktop Only) -->
         <aside class="hidden md:flex flex-col w-64 bg-black p-2 gap-2 z-10">
             <div class="bg-base rounded-lg p-4 flex items-center gap-2">
                 <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
@@ -85,22 +86,16 @@
                 <button onclick="switchTab('search')" class="flex items-center gap-4 text-gray-300 hover:text-white transition group font-bold">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg> Cari
                 </button>
-            </div>
-
-            <!-- Playlist Sidebar -->
-            <div class="bg-base rounded-lg p-4 flex-1 overflow-y-auto no-scrollbar">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-gray-400 font-bold text-sm">PLAYLIST LU</h2>
-                    <button onclick="clearPlaylist()" class="text-xs text-gray-400 hover:text-white">Hapus</button>
-                </div>
-                <div id="sidebarPlaylist" class="flex flex-col gap-3">
-                    <!-- Items -->
-                </div>
+                <button onclick="switchTab('library')" class="flex items-center gap-4 text-gray-300 hover:text-white transition group font-bold">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg> Library
+                </button>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 bg-base md:m-2 md:rounded-lg overflow-y-auto relative pb-24">
+        <main class="flex-1 bg-base md:m-2 md:rounded-lg overflow-y-auto relative pb-32">
+            
+            <!-- Header -->
             <header class="sticky top-0 bg-base/90 backdrop-blur-md z-30 flex justify-between items-center p-4">
                 <div class="flex items-center gap-2 md:hidden">
                     <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
@@ -136,40 +131,44 @@
 
                 <div id="songList" class="flex flex-col gap-1"></div>
             </div>
+
+            <!-- TAB LIBRARY -->
+            <div id="tab-library" class="hidden p-4 md:p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Playlist Lu</h2>
+                    <button onclick="clearPlaylist()" class="text-sm text-gray-400 hover:text-white border border-gray-600 px-3 py-1 rounded-full">Hapus Semua</button>
+                </div>
+                <div id="mobileLibraryList" class="flex flex-col gap-2">
+                    <!-- Library items -->
+                </div>
+            </div>
         </main>
 
         <!-- NOW PLAYING VIEW (Full Screen Overlay) -->
         <div id="nowPlayingView" class="absolute inset-0 bg-[#121212] z-40 flex flex-col transform translate-y-full">
-            <!-- Header Now Playing -->
             <div class="flex items-center justify-between p-4">
                 <button onclick="closeNowPlaying()" class="text-white hover:scale-110 transition">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
-                <span class="text-xs font-bold tracking-widest text-gray-400">MEMUTAR DARI PENCARIAN</span>
+                <span class="text-xs font-bold tracking-widest text-gray-400">MEMUTAR</span>
                 <div class="w-8"></div>
             </div>
 
             <div class="flex-1 flex flex-col md:flex-row p-6 gap-8 overflow-y-auto no-scrollbar">
-                <!-- Artwork & Info -->
-                <div class="flex flex-col items-center w-full md:w-1/2">
-                    <div class="w-full max-w-[350px] aspect-square shadow-2xl mb-8 relative">
+                <div class="flex flex-col items-center w-full md:w-1/2 mt-4">
+                    <div class="w-full max-w-[300px] aspect-square shadow-2xl mb-8 relative">
                         <img id="npThumb" class="w-full h-full object-cover rounded-md shadow-black/50 shadow-2xl" src="">
                     </div>
-                    <div class="w-full max-w-[350px] flex justify-between items-start">
+                    <div class="w-full max-w-[300px] flex justify-between items-start">
                         <div class="overflow-hidden">
                             <h1 id="npTitle" class="text-2xl font-black truncate">Judul Lagu</h1>
                             <p id="npAuthor" class="text-lg text-gray-400 truncate mt-1">Artis</p>
                         </div>
-                        <button class="text-spotify mt-1">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        </button>
                     </div>
                 </div>
 
-                <!-- Kontrol & Queue -->
                 <div class="w-full md:w-1/2 flex flex-col h-full">
-                    <!-- Kontrol Player (Mobile) -->
-                    <div class="mt-auto md:mt-0 flex flex-col items-center md:items-start w-full">
+                    <div class="mt-auto md:mt-0 flex flex-col items-center w-full">
                         <div class="w-full mb-4">
                             <input type="range" id="npSeekBar" min="0" max="100" value="0" class="w-full">
                             <div class="flex justify-between text-xs text-gray-400 mt-1">
@@ -178,31 +177,26 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-center w-full gap-6 mb-8">
-                            <button class="text-gray-400 hover:text-white"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
                             <button id="npPlayBtn" class="bg-white text-black p-3 rounded-full hover:scale-110 transition">
                                 <svg id="npIconPlay" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                 <svg id="npIconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                                 <svg id="npIconLoading" class="w-8 h-8 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             </button>
-                            <button class="text-gray-400 hover:text-white"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
                         </div>
                     </div>
 
                     <!-- Queue List -->
                     <div class="mt-4 w-full bg-[#181818] rounded-lg p-4 flex-1 flex flex-col max-h-[300px]">
                         <h3 class="text-sm font-bold text-gray-300 mb-4">Berikutnya di Antrean</h3>
-                        <div id="queueList" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2">
-                            <!-- Queue items -->
-                        </div>
+                        <div id="queueList" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2"></div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- MINI PLAYER (Bawah) -->
-    <div onclick="openNowPlaying()" class="w-full bg-[#181818] border-t border-[#282828] px-4 py-3 flex items-center justify-between z-50 h-16 md:h-24 shrink-0 cursor-pointer hover:bg-[#282828] transition">
+    <div onclick="openNowPlaying()" class="fixed bottom-[60px] md:bottom-0 left-0 w-full bg-[#181818] border-t border-[#282828] px-4 py-2 flex items-center justify-between z-50 h-16 md:h-24 shrink-0 cursor-pointer hover:bg-[#282828] transition">
         <div class="flex items-center gap-3 w-3/4 md:w-1/4">
             <div class="w-10 h-10 md:w-14 md:h-14 rounded-md overflow-hidden shrink-0 bg-gray-800 relative">
                 <img id="miniThumb" class="w-full h-full object-cover" src="">
@@ -222,6 +216,22 @@
         <div class="w-1/4 justify-end hidden md:flex"></div>
     </div>
 
+    <!-- BOTTOM NAV (Mobile Only) -->
+    <nav class="fixed bottom-0 left-0 w-full bg-black border-t border-[#282828] h-[60px] flex md:hidden z-50">
+        <button onclick="switchTab('home')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span class="text-[10px] font-bold">Beranda</span>
+        </button>
+        <button onclick="switchTab('search')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span class="text-[10px] font-bold">Cari</span>
+        </button>
+        <button onclick="switchTab('library')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>
+            <span class="text-[10px] font-bold">Library</span>
+        </button>
+    </nav>
+
     <audio id="audioPlayer"></audio>
 
     <script>
@@ -229,17 +239,18 @@
         const audio = document.getElementById('audioPlayer');
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-        // STATE APLIKASI
         let currentSong = null;
         let queue = []; 
         let playlist = JSON.parse(localStorage.getItem('oval_playlist')) || [];
 
-        // === FUNGSI NAVIGASI ===
         function switchTab(tab) {
             document.getElementById('tab-home').classList.add('hidden');
             document.getElementById('tab-search').classList.add('hidden');
+            document.getElementById('tab-library').classList.add('hidden');
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            
             if (tab === 'search') document.getElementById('searchInput').focus();
+            if (tab === 'library') renderMobileLibrary();
         }
 
         function openNowPlaying() {
@@ -253,9 +264,10 @@
             document.getElementById('nowPlayingView').classList.add('translate-y-full');
         }
 
-        // === RENDER PLAYLIST (SIDEBAR) ===
+        // Render Playlist (Desktop Sidebar)
         function renderPlaylist() {
             const container = document.getElementById('sidebarPlaylist');
+            if(!container) return;
             container.innerHTML = '';
             if (playlist.length === 0) {
                 container.innerHTML = `<p class="text-xs text-gray-500">Belum ada lagu.</p>`;
@@ -276,18 +288,39 @@
             });
         }
 
+        // Render Playlist (Mobile Library Tab)
+        function renderMobileLibrary() {
+            const container = document.getElementById('mobileLibraryList');
+            container.innerHTML = '';
+            if (playlist.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500">Belum ada lagu di library lu.</p>`;
+                return;
+            }
+            playlist.forEach((song) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
+                item.innerHTML = `
+                    <img src="${song.thumb}" class="w-14 h-14 rounded object-cover">
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-sm font-bold text-white truncate">${song.title}</span>
+                        <span class="text-xs text-gray-400 truncate mt-1">${song.author}</span>
+                    </div>
+                `;
+                item.onclick = () => playSong(song, playlist);
+                container.appendChild(item);
+            });
+        }
+
         function clearPlaylist() {
             playlist = [];
             localStorage.removeItem('oval_playlist');
             renderPlaylist();
+            renderMobileLibrary();
         }
 
-        // === RENDER QUEUE (NOW PLAYING) ===
         function renderQueue() {
             const container = document.getElementById('queueList');
             container.innerHTML = '';
-            
-            // Ambil antrean setelah lagu yang sekarang
             const currentIndex = queue.findIndex(s => s.title === currentSong.title);
             const nextSongs = queue.slice(currentIndex + 1);
 
@@ -311,7 +344,6 @@
             });
         }
 
-        // === PENCARIAN ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -371,12 +403,12 @@
 
                     card.onclick = () => {
                         playSong(songData, searchResults);
-                        // Simpan ke Playlist
                         if (!playlist.some(s => s.title === title)) {
                             playlist.unshift(songData);
                             if (playlist.length > 20) playlist.pop();
                             localStorage.setItem('oval_playlist', JSON.stringify(playlist));
                             renderPlaylist();
+                            renderMobileLibrary();
                         }
                     };
                     songList.appendChild(card);
@@ -388,22 +420,18 @@
             }
         }, 500));
 
-        // === PLAY LAGU ===
         async function playSong(song, currentQueue) {
             currentSong = song;
             queue = currentQueue || [song];
 
-            // Update UI (Mini Player)
             document.getElementById('miniTitle').innerText = song.title;
             document.getElementById('miniAuthor').innerText = song.author;
             document.getElementById('miniThumb').src = song.thumb;
 
-            // Update UI (Now Playing)
             document.getElementById('npTitle').innerText = song.title;
             document.getElementById('npAuthor').innerText = song.author;
             document.getElementById('npThumb').src = song.thumb;
 
-            // Tampilkan Loading
             document.getElementById('miniIconPlay').classList.add('hidden');
             document.getElementById('miniIconPause').classList.add('hidden');
             document.getElementById('miniIconLoading').classList.remove('hidden');
@@ -424,16 +452,16 @@
                 audio.src = audioUrl;
                 await audio.play();
 
+                renderQueue(); // Render antrean pas lagu mulai
+
             } catch (err) {
                 console.error(err);
                 alert('Gagal memutar: ' + err.message);
-                // Reset UI
                 document.getElementById('miniIconPlay').classList.remove('hidden');
                 document.getElementById('miniIconLoading').classList.add('hidden');
             }
         }
 
-        // === KONTROL AUDIO ===
         document.getElementById('miniPlayBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (audio.paused) audio.play();
@@ -482,6 +510,15 @@
             }
         });
 
+        // Otomatis play lagu selanjutnya kalau lagu habis
+        audio.addEventListener('ended', () => {
+            const currentIndex = queue.findIndex(s => s.title === currentSong.title);
+            const nextSong = queue[currentIndex + 1];
+            if (nextSong) {
+                playSong(nextSong, queue);
+            }
+        });
+
         function formatTime(seconds) {
             const m = Math.floor(seconds / 60);
             const s = Math.floor(seconds % 60);
@@ -497,8 +534,8 @@
             };
         }
 
-        // Init
         renderPlaylist();
+        renderMobileLibrary();
     </script>
 </body>
 </html>
