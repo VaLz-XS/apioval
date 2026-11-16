@@ -66,7 +66,6 @@
                 </button>
             </div>
 
-            <!-- Playlist Sidebar -->
             <div class="bg-base rounded-lg p-4 flex-1 overflow-y-auto no-scrollbar">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-gray-400 font-bold text-sm">PLAYLIST LU</h2>
@@ -190,7 +189,6 @@
         <div class="w-1/4 justify-end hidden md:flex"></div>
     </div>
 
-    <!-- BOTTOM NAV (Mobile) -->
     <nav class="fixed bottom-0 left-0 w-full bg-black border-t border-[#282828] h-[60px] flex md:hidden z-50">
         <button onclick="switchTab('home')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -211,10 +209,19 @@
     <script>
         const API_KEY = 'ov_382b386c1da4a353d64e9aae';
         const audio = document.getElementById('audioPlayer');
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
         let currentSong = null;
         let queue = []; 
         let playlist = JSON.parse(localStorage.getItem('oval_playlist')) || [];
+
+        // Daftar server Invidious buat fallback (kalau satu down, pindah ke yang lain)
+        const INVIDIOUS_SERVERS = [
+            'https://inv.tux.pizza',
+            'https://vid.puffyan.us',
+            'https://invidious.io',
+            'https://invidious.snopyta.org'
+        ];
 
         function switchTab(tab) {
             document.getElementById('tab-home').classList.add('hidden');
@@ -315,7 +322,7 @@
             });
         }
 
-        // === PENCARIAN (PAKAI PIPED API BIAR CEPET) ===
+        // === FUNGSI PENCARIAN DENGAN FALLBACK SERVER ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -330,61 +337,73 @@
             loading.classList.add('flex');
             songList.innerHTML = '';
 
-            try {
-                // PAKAI API PIPED YANG JAUH LEBIH CEPAT DARI SCRAPING HTML
-                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
-                const data = await res.json();
+            let success = false;
 
-                // Filter cuma ambil yang tipenya stream (lagu)
-                const results = data.items.filter(item => item.type === 'stream' && item.duration > 0);
-
-                loading.classList.add('hidden');
-                loading.classList.remove('flex');
-
-                const searchResults = [];
-
-                results.slice(0, 15).forEach((video) => {
-                    const title = video.title;
-                    const channel = video.uploaderName;
-                    const duration = formatDuration(video.duration); // Detik ke MM:SS
-                    const thumbnail = video.thumbnail;
+            // Coba satu per satu server Invidious sampai ada yang berhasil
+            for (const server of INVIDIOUS_SERVERS) {
+                try {
+                    const res = await fetch(`${server}/api/v1/search?q=${encodeURIComponent(query)}&type=video`);
+                    if (!res.ok) throw new Error('Server error');
                     
-                    const songData = { title, author: channel, thumb: thumbnail };
-                    searchResults.push(songData);
+                    const data = await res.json();
+                    
+                    if (data.length === 0) throw new Error('No results');
 
-                    const card = document.createElement('div');
-                    card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
-                    card.innerHTML = `
-                        <div class="text-gray-400 w-4 text-center text-sm opacity-0 group-hover:opacity-100">▶</div>
-                        <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
-                            <img src="${thumbnail}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 overflow-hidden">
-                            <h3 class="font-bold text-sm text-white truncate">${title}</h3>
-                            <p class="text-xs text-gray-400 mt-1 truncate">${channel}</p>
-                        </div>
-                        <div class="text-xs text-gray-400 px-2">${duration}</div>
-                    `;
+                    loading.classList.add('hidden');
+                    loading.classList.remove('flex');
 
-                    card.onclick = () => {
-                        playSong(songData, searchResults);
-                        if (!playlist.some(s => s.title === title)) {
-                            playlist.unshift(songData);
-                            if (playlist.length > 20) playlist.pop();
-                            localStorage.setItem('oval_playlist', JSON.stringify(playlist));
-                            renderPlaylist();
-                            renderMobileLibrary();
-                        }
-                    };
-                    songList.appendChild(card);
-                });
+                    const searchResults = [];
 
-            } catch (err) {
-                console.error(err);
+                    data.slice(0, 15).forEach((video) => {
+                        const title = video.title;
+                        const channel = video.author;
+                        const duration = formatDuration(video.lengthSeconds);
+                        const thumbnail = video.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
+                        
+                        const songData = { title, author: channel, thumb: thumbnail };
+                        searchResults.push(songData);
+
+                        const card = document.createElement('div');
+                        card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
+                        card.innerHTML = `
+                            <div class="text-gray-400 w-4 text-center text-sm opacity-0 group-hover:opacity-100">▶</div>
+                            <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
+                                <img src="${thumbnail}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="font-bold text-sm text-white truncate">${title}</h3>
+                                <p class="text-xs text-gray-400 mt-1 truncate">${channel}</p>
+                            </div>
+                            <div class="text-xs text-gray-400 px-2">${duration}</div>
+                        `;
+
+                        card.onclick = () => {
+                            playSong(songData, searchResults);
+                            if (!playlist.some(s => s.title === title)) {
+                                playlist.unshift(songData);
+                                if (playlist.length > 20) playlist.pop();
+                                localStorage.setItem('oval_playlist', JSON.stringify(playlist));
+                                renderPlaylist();
+                                renderMobileLibrary();
+                            }
+                        };
+                        songList.appendChild(card);
+                    });
+
+                    success = true;
+                    break; // Berhenti kalau udah dapet hasil
+
+                } catch (err) {
+                    console.log(`Server ${server} gagal, coba server lain...`);
+                }
+            }
+
+            if (!success) {
                 loading.classList.add('hidden');
                 loading.classList.remove('flex');
-                alert('Gagal mencari lagu: API Pencarian sedang sibuk.');
+                alert('Semua server pencarian sedang sibuk. Coba lagi nanti.');
             }
+
         }, 500));
 
         async function playSong(song, currentQueue) {
