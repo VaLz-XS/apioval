@@ -95,31 +95,17 @@
                 </div>
             </div>
 
-            <!-- TAB SEARCH -->
             <div id="tab-search" class="hidden p-4 md:p-6">
-                <!-- Pencarian YouTube -->
                 <div class="relative mb-8 max-w-2xl">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                     </div>
-                    <input type="text" id="searchInput" placeholder="Cari lagu di YouTube..." class="w-full bg-white text-black placeholder-gray-500 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white transition shadow-lg font-medium">
-                </div>
-
-                <!-- SPOTIFY DOWNLOADER -->
-                <div class="mb-8 border-t border-gray-800 pt-6">
-                    <h3 class="text-lg font-bold mb-4 text-spotify flex items-center gap-2">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
-                        Spotify Downloader
-                    </h3>
-                    <div class="flex flex-col md:flex-row gap-2">
-                        <input type="text" id="spotifyUrl" placeholder="Paste link Spotify (open.spotify.com/track/...)" class="w-full bg-[#242424] text-white placeholder-gray-400 rounded-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-spotify transition">
-                        <button onclick="downloadSpotify()" class="bg-spotify text-black font-bold px-6 py-3 rounded-full hover:scale-105 transition shrink-0">Download</button>
-                    </div>
+                    <input type="text" id="searchInput" placeholder="Cari lagu di Spotify / YouTube..." class="w-full bg-white text-black placeholder-gray-500 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white transition shadow-lg font-medium">
                 </div>
 
                 <div id="loading" class="hidden flex-col items-center justify-center py-10">
                     <svg class="animate-spin h-8 w-8 text-spotify mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <p class="text-sm text-gray-400 font-medium">Memproses...</p>
+                    <p class="text-sm text-gray-400 font-medium">Mencari...</p>
                 </div>
 
                 <div id="songList" class="flex flex-col gap-1"></div>
@@ -331,7 +317,7 @@
             });
         }
 
-        // === PENCARIAN YOUTUBE ===
+        // === PENCARIAN GABUNGAN (SPOTIFY & YOUTUBE) ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -346,10 +332,60 @@
             loading.classList.add('flex');
             songList.innerHTML = '';
 
+            let searchResults = [];
+
+            // 1. Coba cari di Spotify dulu (via endpoint /api/spotify-search)
+            try {
+                const resSpotify = await fetch(`https://apioval.vercel.app/api/spotify-search?q=${encodeURIComponent(query)}`);
+                const dataSpotify = await resSpotify.json();
+
+                if (dataSpotify.ok && dataSpotify.results.length > 0) {
+                    dataSpotify.results.slice(0, 5).forEach((track) => {
+                        const songData = {
+                            title: track.title,
+                            author: track.artist,
+                            thumb: track.thumbnail,
+                            type: 'spotify',
+                            spotifyUrl: track.url
+                        };
+                        searchResults.push(songData);
+
+                        const card = document.createElement('div');
+                        card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
+                        card.innerHTML = `
+                            <div class="text-spotify w-4 text-center text-sm font-bold">S</div>
+                            <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
+                                <img src="${track.thumbnail}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="font-bold text-sm text-white truncate">${track.title}</h3>
+                                <p class="text-xs text-gray-400 mt-1 truncate">${track.artist}</p>
+                            </div>
+                            <div class="text-xs text-spotify px-2 font-bold">SPOTIFY</div>
+                        `;
+
+                        card.onclick = () => {
+                            playSong(songData, searchResults);
+                            if (!playlist.some(s => s.title === track.title)) {
+                                playlist.unshift(songData);
+                                if (playlist.length > 20) playlist.pop();
+                                localStorage.setItem('oval_playlist', JSON.stringify(playlist));
+                                renderPlaylist();
+                                renderMobileLibrary();
+                            }
+                        };
+                        songList.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.log('Gagal cari Spotify, coba YouTube...');
+            }
+
+            // 2. Coba cari di YouTube (via CORS Proxy)
             try {
                 const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-                const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
-                const html = await res.text();
+                const resYt = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
+                const html = await resYt.text();
 
                 const match = html.match(/var ytInitialData = ({.*?});<\/script>/);
                 if (!match) throw new Error('Gagal parsing data.');
@@ -359,14 +395,9 @@
                     .primaryContents.sectionListRenderer.contents[0]
                     .itemSectionRenderer.contents;
 
-                const results = contents.filter(c => c.videoRenderer).map(c => c.videoRenderer);
+                const ytResults = contents.filter(c => c.videoRenderer).map(c => c.videoRenderer);
 
-                loading.classList.add('hidden');
-                loading.classList.remove('flex');
-
-                const searchResults = [];
-
-                results.slice(0, 10).forEach((video) => {
+                ytResults.slice(0, 5).forEach((video) => {
                     const title = video.title.runs[0].text;
                     const channel = video.ownerText.runs[0].text;
                     const duration = video.lengthText?.simpleText || '0:00';
@@ -378,7 +409,7 @@
                     const card = document.createElement('div');
                     card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
                     card.innerHTML = `
-                        <div class="text-gray-400 w-4 text-center text-sm opacity-0 group-hover:opacity-100">▶</div>
+                        <div class="text-red-500 w-4 text-center text-sm font-bold">Y</div>
                         <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
                             <img src="${thumbnail}" class="w-full h-full object-cover">
                         </div>
@@ -403,76 +434,17 @@
                 });
 
             } catch (err) {
-                loading.classList.add('hidden');
-                loading.classList.remove('flex');
-                alert('Gagal mencari lagu. Coba lagi nanti.');
+                console.log('Gagal cari YouTube...');
             }
-        }, 500));
 
-        // === SPOTIFY DOWNLOADER ===
-        async function downloadSpotify() {
-            const url = document.getElementById('spotifyUrl').value.trim();
-            if (!url || !url.includes('spotify.com')) return alert('Masukkan link Spotify yang valid!');
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
 
-            const loading = document.getElementById('loading');
-            const songList = document.getElementById('songList');
-
-            loading.classList.remove('hidden');
-            loading.classList.add('flex');
-            songList.innerHTML = '';
-
-            try {
-                const res = await fetch(`https://apioval.vercel.app/api/spotify?url=${encodeURIComponent(url)}`);
-                const data = await res.json();
-
-                if (!data.ok) throw new Error(data.error || 'Gagal mengambil data Spotify');
-
-                loading.classList.add('hidden');
-                loading.classList.remove('flex');
-
-                const audioDL = data.downloads.find(d => d.type === 'audio');
-                if (!audioDL) throw new Error('Link audio tidak ditemukan.');
-
-                const songData = {
-                    title: data.title,
-                    author: data.artist || 'Spotify',
-                    thumb: data.thumbnail,
-                    type: 'spotify',
-                    spotifyAudioUrl: audioDL.url
-                };
-
-                const card = document.createElement('div');
-                card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
-                card.innerHTML = `
-                    <div class="text-spotify w-4 text-center text-sm">▶</div>
-                    <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
-                        <img src="${data.thumbnail}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                        <h3 class="font-bold text-sm text-white truncate">${data.title}</h3>
-                        <p class="text-xs text-gray-400 mt-1 truncate">${data.artist || 'Spotify'}</p>
-                    </div>
-                    <div class="text-xs text-green-500 px-2 font-bold">SPOTIFY</div>
-                `;
-
-                card.onclick = () => {
-                    playSpotifySong(songData);
-                    if (!playlist.some(s => s.title === data.title)) {
-                        playlist.unshift(songData);
-                        if (playlist.length > 20) playlist.pop();
-                        localStorage.setItem('oval_playlist', JSON.stringify(playlist));
-                        renderPlaylist();
-                        renderMobileLibrary();
-                    }
-                };
-                songList.appendChild(card);
-
-            } catch (err) {
-                loading.classList.add('hidden');
-                loading.classList.remove('flex');
-                alert('Gagal: ' + err.message);
+            if (searchResults.length === 0) {
+                songList.innerHTML = `<p class="text-center text-gray-500 mt-4">Lagu tidak ditemukan.</p>`;
             }
-        }
+
+        }, 600));
 
         // === PLAYER LOGIC ===
         async function playSong(song, currentQueue) {
@@ -499,7 +471,21 @@
                 if (song.type === 'spotify' && song.spotifyAudioUrl) {
                     audio.src = song.spotifyAudioUrl;
                     await audio.play();
+                } else if (song.type === 'spotify' && song.spotifyUrl) {
+                    // Kalau dari search, kita harus nembak /api/spotify dulu buat dapet link MP3-nya
+                    const res = await fetch(`https://apioval.vercel.app/api/spotify?url=${encodeURIComponent(song.spotifyUrl)}`);
+                    const data = await res.json();
+                    
+                    if (!data.ok) throw new Error(data.error || 'Gagal mengambil audio Spotify');
+                    
+                    const audioDL = data.downloads.find(d => d.type === 'audio');
+                    if (!audioDL) throw new Error('Link audio tidak ditemukan.');
+                    
+                    song.spotifyAudioUrl = audioDL.url;
+                    audio.src = audioDL.url;
+                    await audio.play();
                 } else {
+                    // YouTube
                     const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(song.title)}&apikey=${API_KEY}`);
                     const data = await res.json();
 
@@ -520,11 +506,6 @@
                 document.getElementById('miniIconPlay').classList.remove('hidden');
                 document.getElementById('miniIconLoading').classList.add('hidden');
             }
-        }
-
-        function playSpotifySong(song) {
-            playSong(song, [song]);
-            openNowPlaying();
         }
 
         // Event Audio
