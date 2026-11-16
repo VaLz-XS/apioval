@@ -10,24 +10,33 @@
         
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #121212; 
+            background-color: #000000; /* Latar belakang hitam pekat khas Spotify */
             color: #ffffff;
-            padding-bottom: 90px; 
-            overflow-x: hidden;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
+        /* Warna Khas Spotify */
         .text-spotify { color: #1DB954; }
         .bg-spotify { background-color: #1DB954; }
-        .bg-surface { background-color: #181818; }
-        .bg-surface-hover:hover { background-color: #282828; }
+        .bg-base { background-color: #121212; }
+        .bg-highlight { background-color: #1A1A1A; }
+        .bg-hover:hover { background-color: #2A2A2A; }
+        .bg-active:active { background-color: #333333; }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #121212; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #535353; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
 
+        /* Animasi */
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin 8s linear infinite; }
-        
+
+        /* Input Range (Progress Bar) */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -49,93 +58,190 @@
             background: #535353;
             border-radius: 2px;
         }
+
+        /* Sembunyiin scrollbar di mobile */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-    <header class="sticky top-0 w-full bg-[#121212]/90 backdrop-blur-md z-40 px-4 py-3 flex justify-between items-center border-b border-gray-800">
-        <div class="flex items-center gap-2">
-            <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/>
-            </svg>
-            <h1 class="text-lg font-bold tracking-tight">Oval Music</h1>
-        </div>
-        <a href="/" class="text-sm font-bold text-gray-300 hover:text-white transition">Home</a>
-    </header>
-
-    <main class="flex-1 px-4 py-6 max-w-3xl w-full mx-auto">
+    <!-- Container Utama -->
+    <div class="flex-1 flex overflow-hidden">
         
-        <div class="relative mb-8">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <!-- SIDEBAR (Desktop) -->
+        <aside class="hidden md:flex flex-col w-64 bg-black p-2 gap-2">
+            <!-- Logo -->
+            <div class="bg-base rounded-lg p-4 flex items-center gap-2">
+                <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/>
+                </svg>
+                <h1 class="text-xl font-bold tracking-tight">Oval Music</h1>
             </div>
-            <input type="text" id="searchInput" placeholder="Cari lagu, artis, atau album" class="w-full bg-[#242424] text-white placeholder-gray-400 rounded-full py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-spotify transition shadow-lg">
-        </div>
-
-        <div id="loading" class="hidden flex-col items-center justify-center py-10">
-            <svg class="animate-spin h-8 w-8 text-spotify mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <p class="text-sm text-gray-400 font-medium">Mencari lagu...</p>
-        </div>
-
-        <div id="songList" class="hidden flex-col gap-2"></div>
-
-        <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-gray-500">
-            <svg class="w-16 h-16 mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-            <h2 class="text-lg font-bold text-white mb-1">Belum ada lagu</h2>
-            <p class="text-sm">Cari lagu favorit lu di atas!</p>
-        </div>
-
-    </main>
-
-    <div id="miniPlayer" class="fixed bottom-0 left-0 w-full bg-[#181818] border-t border-gray-800 z-50 transform translate-y-full transition-transform duration-300">
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
             
-            <div class="flex items-center gap-3 overflow-hidden w-1/3">
-                <div class="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-gray-800 relative group">
-                    <img id="playerThumb" class="w-full h-full object-cover" src="">
+            <!-- Menu -->
+            <div class="bg-base rounded-lg p-4 flex flex-col gap-4">
+                <button onclick="switchTab('home')" class="flex items-center gap-4 text-gray-300 hover:text-white transition group font-bold">
+                    <svg class="w-6 h-6 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    Beranda
+                </button>
+                <button onclick="switchTab('search')" class="flex items-center gap-4 text-gray-300 hover:text-white transition group font-bold">
+                    <svg class="w-6 h-6 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    Cari
+                </button>
+            </div>
+
+            <!-- Playlist -->
+            <div class="bg-base rounded-lg p-4 flex-1 overflow-y-auto">
+                <h2 class="text-gray-400 font-bold text-sm mb-4">PLAYLIST LU</h2>
+                <div id="sidebarPlaylist" class="flex flex-col gap-3">
+                    <!-- Playlist items masuk sini -->
                 </div>
-                <div class="flex flex-col overflow-hidden">
-                    <h3 id="playerTitle" class="font-bold text-sm text-white truncate">Judul Lagu</h3>
-                    <p id="playerAuthor" class="text-xs text-gray-400 truncate mt-0.5">Artis</p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 bg-base md:m-2 md:rounded-lg overflow-y-auto relative">
+            <!-- Header Sticky -->
+            <header class="sticky top-0 bg-base/90 backdrop-blur-md z-30 flex justify-between items-center p-4">
+                <div class="flex items-center gap-2 md:hidden">
+                    <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
+                    <h1 class="text-lg font-bold">Oval</h1>
+                </div>
+                <a href="/" class="ml-auto text-sm font-bold bg-white text-black px-4 py-1.5 rounded-full hover:scale-105 transition">Home</a>
+            </header>
+
+            <!-- TAB HOME -->
+            <div id="tab-home" class="p-4 md:p-6">
+                <h2 class="text-2xl font-bold mb-6">Selamat Datang!</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Card Playlist Recent -->
+                    <div onclick="switchTab('search')" class="bg-highlight hover:bg-hover transition rounded-md overflow-hidden cursor-pointer flex items-center h-20 group">
+                        <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" class="h-full w-20 object-cover">
+                        <h3 class="font-bold ml-4 group-hover:text-spotify transition">Lagu Populer</h3>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center justify-center w-1/3">
-                <div class="flex items-center gap-4 mb-2">
-                    <button id="playBtn" class="text-white hover:scale-110 transition transform">
-                        <svg id="iconPlay" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        <svg id="iconLoading" class="w-8 h-8 animate-spin hidden text-spotify" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    </button>
-                    <button id="stopBtn" class="text-gray-400 hover:text-white transition">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
-                    </button>
+            <!-- TAB SEARCH -->
+            <div id="tab-search" class="hidden p-4 md:p-6">
+                <div class="relative mb-8 max-w-2xl">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Apa yang ingin kamu putar?" class="w-full bg-white text-black placeholder-gray-500 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white transition shadow-lg font-medium">
                 </div>
-                <div class="w-full flex items-center gap-2 text-xs text-gray-400">
-                    <span id="currentTime">0:00</span>
-                    <input type="range" id="seekBar" min="0" max="100" value="0" class="w-full">
-                    <span id="duration">0:00</span>
+
+                <div id="loading" class="hidden flex-col items-center justify-center py-10">
+                    <svg class="animate-spin h-8 w-8 text-spotify mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-sm text-gray-400 font-medium">Mencari lagu...</p>
+                </div>
+
+                <div id="songList" class="flex flex-col gap-1"></div>
+
+                <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-gray-500">
+                    <svg class="w-16 h-16 mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                    <h2 class="text-lg font-bold text-white mb-1">Cari lagu favoritmu</h2>
+                    <p class="text-sm text-center">Ketik judul lagu atau nama artis di kolom pencarian atas.</p>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <div class="w-1/3 flex justify-end"></div>
+    <!-- PLAYER BAR (Bawah) -->
+    <div class="w-full bg-[#181818] border-t border-[#282828] px-4 py-3 flex items-center justify-between z-50 h-20 md:h-24 shrink-0">
+        
+        <!-- Info Lagu (Kiri) -->
+        <div class="flex items-center gap-3 w-1/4 min-w-[150px]">
+            <div class="w-12 h-12 md:w-14 md:h-14 rounded-md overflow-hidden shrink-0 bg-gray-800 relative group">
+                <img id="playerThumb" class="w-full h-full object-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+            </div>
+            <div class="flex flex-col overflow-hidden">
+                <h3 id="playerTitle" class="font-bold text-sm text-white truncate hover:underline cursor-pointer">Belum ada lagu</h3>
+                <p id="playerAuthor" class="text-xs text-gray-400 truncate mt-0.5">Pilih lagu dulu</p>
+            </div>
+        </div>
+
+        <!-- Kontrol & Progress (Tengah) -->
+        <div class="flex flex-col items-center justify-center w-2/4 max-w-[600px]">
+            <div class="flex items-center gap-4 md:gap-6 mb-2">
+                <button class="text-gray-400 hover:text-white transition hidden md:block">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button id="playBtn" class="text-white hover:scale-110 transition transform bg-white rounded-full p-1.5">
+                    <svg id="iconPlay" class="w-6 h-6 hidden text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="iconPause" class="w-6 h-6 hidden text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <svg id="iconLoading" class="w-6 h-6 animate-spin hidden text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+                <button id="stopBtn" class="text-gray-400 hover:text-white transition hidden md:block">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                </button>
+            </div>
+            <div class="w-full flex items-center gap-2 text-xs text-gray-400">
+                <span id="currentTime" class="w-10 text-right">0:00</span>
+                <input type="range" id="seekBar" min="0" max="100" value="0" class="w-full">
+                <span id="duration" class="w-10 text-left">0:00</span>
+            </div>
+        </div>
+
+        <!-- Spacer (Kanan) -->
+        <div class="w-1/4 flex justify-end hidden md:flex">
+            <!-- Ikon tambahan -->
         </div>
     </div>
 
     <audio id="audioPlayer"></audio>
 
     <script>
-        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; // API KEY OVAL LU
+        const API_KEY = 'ov_382b386c1da4a353d64e9aae';
         let currentVideoId = '';
+        let playlist = JSON.parse(localStorage.getItem('oval_playlist')) || [];
         
         const audio = document.getElementById('audioPlayer');
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-        // === PENCARIAN (YouTube Scraping) ===
+        // === NAVIGASI TAB ===
+        function switchTab(tab) {
+            document.getElementById('tab-home').classList.add('hidden');
+            document.getElementById('tab-search').classList.add('hidden');
+            
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            
+            if (tab === 'search') {
+                document.getElementById('searchInput').focus();
+            }
+        }
+
+        // === RENDER PLAYLIST SIDEBAR ===
+        function renderPlaylist() {
+            const container = document.getElementById('sidebarPlaylist');
+            container.innerHTML = '';
+            
+            if (playlist.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500">Belum ada lagu. Cari lagu dulu!</p>`;
+                return;
+            }
+
+            playlist.forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-3 cursor-pointer group';
+                item.innerHTML = `
+                    <img src="${song.thumb}" class="w-10 h-10 rounded object-cover">
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-sm font-bold text-white truncate group-hover:text-spotify">${song.title}</span>
+                        <span class="text-xs text-gray-400 truncate">${song.author}</span>
+                    </div>
+                `;
+                item.onclick = () => playSong(song);
+                container.appendChild(item);
+            });
+        }
+
+        // === PENCARIAN ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
-                document.getElementById('songList').classList.add('hidden');
+                document.getElementById('songList').innerHTML = '';
                 document.getElementById('emptyState').classList.remove('hidden');
                 return;
             }
@@ -146,7 +252,6 @@
 
             loading.classList.remove('hidden');
             loading.classList.add('flex');
-            songList.classList.add('hidden');
             emptyState.classList.add('hidden');
             songList.innerHTML = '';
 
@@ -169,8 +274,6 @@
 
                 loading.classList.add('hidden');
                 loading.classList.remove('flex');
-                songList.classList.remove('hidden');
-                songList.classList.add('flex');
 
                 results.slice(0, 10).forEach((video) => {
                     const videoId = video.videoId;
@@ -180,10 +283,11 @@
                     const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
                     const card = document.createElement('div');
-                    card.className = 'flex items-center gap-4 p-2 rounded-md bg-surface hover:bg-surface-hover transition cursor-pointer group';
+                    card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
                     
                     card.innerHTML = `
-                        <div class="w-14 h-14 rounded overflow-hidden shrink-0 relative">
+                        <div class="text-gray-400 w-4 text-center text-sm">▶</div>
+                        <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
                             <img src="${thumbnail}" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 overflow-hidden">
@@ -191,13 +295,20 @@
                             <p class="text-xs text-gray-400 mt-1 truncate">${channel}</p>
                         </div>
                         <div class="text-xs text-gray-400 px-2">${duration}</div>
-                        <div class="pr-2 opacity-0 group-hover:opacity-100 transition">
-                            <svg class="w-6 h-6 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </div>
                     `;
 
-                    // Kirim Judul ke fungsi playSong
-                    card.onclick = () => playSong(title, channel, thumbnail);
+                    const songData = { title, author: channel, thumb: thumbnail };
+                    
+                    card.onclick = () => {
+                        playSong(songData);
+                        // Simpan ke Playlist (Maksimal 10 lagu)
+                        if (!playlist.some(s => s.title === title)) {
+                            playlist.unshift(songData);
+                            if (playlist.length > 10) playlist.pop();
+                            localStorage.setItem('oval_playlist', JSON.stringify(playlist));
+                            renderPlaylist();
+                        }
+                    };
                     songList.appendChild(card);
                 });
 
@@ -207,35 +318,29 @@
             }
         }, 500));
 
-        // === PLAY LAGU (PAKAI API OVAL LU) ===
-        async function playSong(title, author, thumb) {
-            const miniPlayer = document.getElementById('miniPlayer');
+        // === PLAY LAGU (API OVAL) ===
+        async function playSong(song) {
             const iconPlay = document.getElementById('iconPlay');
             const iconPause = document.getElementById('iconPause');
             const iconLoading = document.getElementById('iconLoading');
 
-            document.getElementById('playerTitle').innerText = title;
-            document.getElementById('playerAuthor').innerText = author;
-            document.getElementById('playerThumb').src = thumb;
-            miniPlayer.classList.remove('translate-y-full');
+            document.getElementById('playerTitle').innerText = song.title;
+            document.getElementById('playerAuthor').innerText = song.author;
+            document.getElementById('playerThumb').src = song.thumb;
 
             iconPlay.classList.add('hidden');
             iconPause.classList.add('hidden');
             iconLoading.classList.remove('hidden');
 
             try {
-                // TEMBAK API OVAL LU (Bukan API publik lagi)
-                const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(title)}&apikey=${API_KEY}`);
+                const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(song.title)}&apikey=${API_KEY}`);
                 const data = await res.json();
 
                 if (!data.ok) throw new Error(data.error || 'Gagal ambil data dari OvalAPI');
 
-                // API Oval lu ngasih link video/audio. Kita coba ambil yang audio.
-                // Kalau data.video nggak ada, coba data.audio atau data.url
                 const audioUrl = data.audio || data.video || data.url;
                 if (!audioUrl) throw new Error('Link audio tidak ditemukan dari API.');
 
-                // Set source dan play
                 audio.src = audioUrl;
                 await audio.play();
 
@@ -251,6 +356,7 @@
             }
         }
 
+        // === KONTROL PLAYER ===
         document.getElementById('playBtn').addEventListener('click', () => {
             if (audio.paused) audio.play();
             else audio.pause();
@@ -259,7 +365,6 @@
         document.getElementById('stopBtn').addEventListener('click', () => {
             audio.pause();
             audio.currentTime = 0;
-            document.getElementById('miniPlayer').classList.add('translate-y-full');
             document.getElementById('playerThumb').classList.remove('animate-spin-slow');
             document.getElementById('iconPlay').classList.remove('hidden');
             document.getElementById('iconPause').classList.add('hidden');
@@ -309,6 +414,9 @@
                 timeout = setTimeout(later, wait);
             };
         }
+
+        // Init Playlist saat halaman dibuka
+        renderPlaylist();
     </script>
 </body>
 </html>
