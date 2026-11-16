@@ -2,66 +2,117 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oval Music - Spotify Style</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oval Music - Spotify Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&display=swap');
-        body { font-family: 'Space Grotesk', sans-serif; background-color: #f0f0f0; padding-bottom: 100px; }
-        .brutal-box { border: 4px solid #000; box-shadow: 6px 6px 0px #000; background: #fff; }
-        .brutal-btn { border: 3px solid #000; box-shadow: 3px 3px 0px #000; transition: all 0.1s; }
-        .brutal-btn:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px #000; }
-        .brutal-input { border: 3px solid #000; box-shadow: 3px 3px 0px #000; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #fff; border-left: 2px solid #000; }
-        ::-webkit-scrollbar-thumb { background: #000; }
-        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #121212; 
+            color: #ffffff;
+            padding-bottom: 90px; /* Ruang buat player bawah */
+            overflow-x: hidden;
+        }
+
+        /* Warna khas Spotify */
+        .text-spotify { color: #1DB954; }
+        .bg-spotify { background-color: #1DB954; }
+        .bg-surface { background-color: #181818; }
+        .bg-surface-hover:hover { background-color: #282828; }
+
+        /* Scrollbar tipis */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #535353; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
+
+        /* Animasi muter buat gambar lagu pas diputer */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        
+        /* Sembunyiin iframe YouTube tapi tetep jalan */
+        #youtubePlayer { position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen flex flex-col">
 
-    <header class="fixed top-0 w-full bg-yellow-400 border-b-4 border-black z-40 p-4 flex justify-between items-center">
-        <h1 class="text-2xl font-black tracking-tighter">OVAL MUSIC 🎧</h1>
-        <a href="/" class="brutal-btn bg-white px-3 py-1 font-bold text-sm rounded">HOME</a>
+    <!-- Header -->
+    <header class="sticky top-0 w-full bg-[#121212]/90 backdrop-blur-md z-40 px-4 py-3 flex justify-between items-center border-b border-gray-800">
+        <div class="flex items-center gap-2">
+            <!-- SVG Spotify Logo-ish -->
+            <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/>
+            </svg>
+            <h1 class="text-lg font-bold tracking-tight">Oval Music</h1>
+        </div>
+        <a href="/" class="text-sm font-bold text-gray-300 hover:text-white transition">Home</a>
     </header>
 
-    <main class="pt-24 px-4 max-w-2xl mx-auto">
-        <div class="flex gap-2 mb-8">
-            <input type="text" id="searchInput" placeholder="Cari lagu, artis, atau album..." class="brutal-input w-full px-4 py-3 text-sm font-bold rounded-lg focus:outline-none placeholder-gray-400">
-            <button id="searchBtn" class="brutal-btn bg-green-400 px-6 py-3 font-black text-lg rounded-lg">CARI</button>
+    <main class="flex-1 px-4 py-6 max-w-3xl w-full mx-auto">
+        
+        <!-- Search Bar -->
+        <div class="relative mb-8">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="searchInput" placeholder="Cari lagu, artis, atau album" class="w-full bg-[#242424] text-white placeholder-gray-400 rounded-full py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-spotify transition shadow-lg">
         </div>
 
-        <div id="loading" class="hidden text-center font-bold text-lg mb-8">
-            <div class="inline-block animate-spin-slow text-2xl mb-2">💿</div>
-            <p>Mencari lagu...</p>
+        <!-- Loading -->
+        <div id="loading" class="hidden flex-col items-center justify-center py-10">
+            <svg class="animate-spin h-8 w-8 text-spotify mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="text-sm text-gray-400 font-medium">Mencari lagu...</p>
         </div>
 
-        <div id="songList" class="hidden space-y-4"></div>
+        <!-- List Lagu -->
+        <div id="songList" class="hidden flex-col gap-2"></div>
 
-        <div id="emptyState" class="text-center mt-20 text-gray-400">
-            <div class="text-6xl mb-4">🎵</div>
-            <h2 class="text-xl font-black text-gray-600">Belum ada lagu</h2>
-            <p class="font-bold text-sm mt-2">Cari lagu favorit lu di atas!</p>
+        <!-- Empty State -->
+        <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-gray-500">
+            <svg class="w-16 h-16 mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            <h2 class="text-lg font-bold text-white mb-1">Belum ada lagu</h2>
+            <p class="text-sm">Cari lagu favorit lu di atas!</p>
         </div>
+
     </main>
 
-    <div id="miniPlayer" class="fixed bottom-0 left-0 w-full bg-white border-t-4 border-black z-50 transform translate-y-full transition-transform duration-300">
-        <div class="max-w-2xl mx-auto p-3 flex items-center gap-4">
-            <div class="w-14 h-14 border-2 border-black rounded-md overflow-hidden shrink-0 relative bg-black">
-                <img id="playerThumb" class="w-full h-full object-cover opacity-50" src="">
-                <!-- YouTube Player Tetap Ada di DOM, tapi ukurannya kecil banget -->
-                <div id="youtubePlayer" class="absolute top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"></div>
+    <!-- Mini Player (Fixed di bawah) -->
+    <div id="miniPlayer" class="fixed bottom-0 left-0 w-full bg-[#181818] border-t border-gray-800 z-50 transform translate-y-full transition-transform duration-300">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            
+            <!-- Info Lagu (Kiri) -->
+            <div class="flex items-center gap-3 overflow-hidden w-1/3">
+                <div class="w-12 h-12 rounded-md overflow-hidden shrink-0 bg-gray-800 relative group">
+                    <img id="playerThumb" class="w-full h-full object-cover" src="">
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <h3 id="playerTitle" class="font-bold text-sm text-white truncate">Judul Lagu</h3>
+                    <p id="playerAuthor" class="text-xs text-gray-400 truncate mt-0.5">Artis</p>
+                </div>
             </div>
-            <div class="flex-1 overflow-hidden">
-                <h3 id="playerTitle" class="font-black text-sm truncate">Judul Lagu</h3>
-                <p id="playerAuthor" class="text-xs font-bold text-gray-500 truncate">Artis</p>
+
+            <!-- Kontrol (Tengah) -->
+            <div class="flex items-center justify-center gap-4 w-1/3">
+                <button id="playBtn" class="text-white hover:scale-110 transition transform">
+                    <!-- SVG Play -->
+                    <svg id="iconPlay" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <!-- SVG Pause -->
+                    <svg id="iconPause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button id="stopBtn" class="text-gray-400 hover:text-white transition">
+                    <!-- SVG Stop -->
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                </button>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="playBtn" class="brutal-btn bg-blue-400 w-10 h-10 rounded-full flex items-center justify-center text-lg">▶</button>
-                <button id="stopBtn" class="brutal-btn bg-red-400 w-10 h-10 rounded-full flex items-center justify-center text-lg">⏹</button>
+
+            <!-- Spacer (Kanan) -->
+            <div class="w-1/3 flex justify-end">
+                <!-- Bisa diisi ikon volume dll -->
             </div>
+
         </div>
     </div>
 
@@ -73,20 +124,21 @@
 
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
+        // Setup YouTube API (Background Play)
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtubePlayer', {
-                height: '1', // Ukuran minimal
+                height: '1', 
                 width: '1',
                 videoId: '',
                 playerVars: { 
                     'autoplay': 0, 
                     'controls': 0,
+                    'playsinline': 1, // Kunci biar ga auto-pause di iOS
                     'origin': window.location.origin
                 },
                 events: {
                     'onReady': () => { 
                         isPlayerReady = true; 
-                        console.log('YouTube Player Ready!');
                     },
                     'onStateChange': onPlayerStateChange
                 }
@@ -94,24 +146,38 @@
         }
 
         function onPlayerStateChange(event) {
+            const iconPlay = document.getElementById('iconPlay');
+            const iconPause = document.getElementById('iconPause');
+
             if (event.data === YT.PlayerState.PLAYING) {
-                document.getElementById('playBtn').innerText = '⏸';
                 isPlaying = true;
+                iconPlay.classList.add('hidden');
+                iconPause.classList.remove('hidden');
+                // Animasi muter di gambar player
+                document.getElementById('playerThumb').classList.add('animate-spin-slow');
             } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-                document.getElementById('playBtn').innerText = '▶';
                 isPlaying = false;
+                iconPlay.classList.remove('hidden');
+                iconPause.classList.add('hidden');
+                document.getElementById('playerThumb').classList.remove('animate-spin-slow');
             }
         }
 
-        document.getElementById('searchBtn').addEventListener('click', async () => {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) return;
+        // === PENCARIAN ===
+        document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
+            const query = e.target.value.trim();
+            if (!query) {
+                document.getElementById('songList').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
 
             const loading = document.getElementById('loading');
             const songList = document.getElementById('songList');
             const emptyState = document.getElementById('emptyState');
 
             loading.classList.remove('hidden');
+            loading.classList.add('flex');
             songList.classList.add('hidden');
             emptyState.classList.add('hidden');
             songList.innerHTML = '';
@@ -122,22 +188,21 @@
                 const html = await res.text();
 
                 const match = html.match(/var ytInitialData = ({.*?});<\/script>/);
-                if (!match) throw new Error('Gagal parsing data YouTube.');
+                if (!match) throw new Error('Gagal parsing data.');
 
                 const ytData = JSON.parse(match[1]);
-                
                 const contents = ytData.contents.twoColumnSearchResultsRenderer
                     .primaryContents.sectionListRenderer.contents[0]
                     .itemSectionRenderer.contents;
 
-                const results = contents
-                    .filter(c => c.videoRenderer)
-                    .map(c => c.videoRenderer);
+                const results = contents.filter(c => c.videoRenderer).map(c => c.videoRenderer);
 
                 if (results.length === 0) throw new Error('Lagu tidak ditemukan.');
 
                 loading.classList.add('hidden');
+                loading.classList.remove('flex');
                 songList.classList.remove('hidden');
+                songList.classList.add('flex');
 
                 results.slice(0, 10).forEach((video) => {
                     const videoId = video.videoId;
@@ -147,45 +212,42 @@
                     const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
                     const card = document.createElement('div');
-                    card.className = 'brutal-box p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition';
+                    card.className = 'flex items-center gap-4 p-2 rounded-md bg-surface hover:bg-surface-hover transition cursor-pointer group';
                     
                     card.innerHTML = `
-                        <div class="w-16 h-16 border-2 border-black rounded overflow-hidden shrink-0 relative">
+                        <div class="w-14 h-14 rounded overflow-hidden shrink-0 relative">
                             <img src="${thumbnail}" class="w-full h-full object-cover">
-                            <span class="absolute bottom-0 right-0 bg-black text-white text-[9px] font-bold px-1">${duration}</span>
                         </div>
                         <div class="flex-1 overflow-hidden">
-                            <h3 class="font-black text-sm leading-tight truncate">${title}</h3>
-                            <p class="text-xs font-bold text-gray-500 mt-1 truncate">${channel}</p>
+                            <h3 class="font-bold text-sm text-white truncate">${title}</h3>
+                            <p class="text-xs text-gray-400 mt-1 truncate">${channel}</p>
                         </div>
-                        <div class="brutal-btn bg-yellow-300 w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0">▶</div>
+                        <div class="text-xs text-gray-400 px-2">${duration}</div>
+                        <div class="pr-2 opacity-0 group-hover:opacity-100 transition">
+                            <svg class="w-6 h-6 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
                     `;
 
-                    card.onclick = () => {
-                        playSong(videoId, title, channel, thumbnail);
-                    };
-
+                    card.onclick = () => playSong(videoId, title, channel, thumbnail);
                     songList.appendChild(card);
                 });
 
             } catch (err) {
                 loading.classList.add('hidden');
-                alert('Gagal mencari lagu: ' + err.message);
+                loading.classList.remove('flex');
+                // alert('Gagal mencari lagu: ' + err.message);
             }
-        });
+        }, 800)); // Delay 800ms biar ga spam API tiap ngetik
 
         function playSong(videoId, title, author, thumb) {
-            if (!isPlayerReady) {
-                alert("YouTube Player belum siap. Tunggu sebentar lagi lalu klik lagunya.");
-                return;
-            }
+            if (!isPlayerReady) return alert("Player belum siap, tunggu sebentar.");
 
             const miniPlayer = document.getElementById('miniPlayer');
             document.getElementById('playerTitle').innerText = title;
             document.getElementById('playerAuthor').innerText = author;
             document.getElementById('playerThumb').src = thumb;
+            
             miniPlayer.classList.remove('translate-y-full');
-
             currentVideoId = videoId;
             player.loadVideoById(videoId);
         }
@@ -200,12 +262,19 @@
             if (!player) return;
             player.stopVideo();
             document.getElementById('miniPlayer').classList.add('translate-y-full');
+            document.getElementById('playerThumb').classList.remove('animate-spin-slow');
             currentVideoId = '';
         });
 
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('searchBtn').click();
-        });
+        // Helper Debounce (biar ga nembak API tiap ketikan)
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
     </script>
 </body>
 </html>
