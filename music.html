@@ -16,7 +16,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding-bottom: 70px; /* Ruang buat Nav Bawah & Mini Player */
+            padding-bottom: 70px;
         }
 
         .text-spotify { color: #1DB954; }
@@ -32,47 +32,22 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin 15s linear infinite; }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            background: #fff;
-            cursor: pointer;
-            margin-top: -4px;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #535353;
-            border-radius: 2px;
-        }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -4px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #535353; border-radius: 2px; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Transisi Halaman Now Playing */
-        #nowPlayingView {
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            transform: translateY(100%);
-        }
-        #nowPlayingView.active {
-            transform: translateY(0);
-        }
+        #nowPlayingView { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); transform: translateY(100%); }
+        #nowPlayingView.active { transform: translateY(0); }
     </style>
 </head>
 <body>
 
-    <!-- CONTAINER UTAMA -->
     <div class="flex-1 flex overflow-hidden relative">
         
-        <!-- SIDEBAR (Desktop Only) -->
+        <!-- SIDEBAR (Desktop) -->
         <aside class="hidden md:flex flex-col w-64 bg-black p-2 gap-2 z-10">
             <div class="bg-base rounded-lg p-4 flex items-center gap-2">
                 <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
@@ -90,12 +65,19 @@
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg> Library
                 </button>
             </div>
+
+            <!-- Playlist Sidebar -->
+            <div class="bg-base rounded-lg p-4 flex-1 overflow-y-auto no-scrollbar">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-gray-400 font-bold text-sm">PLAYLIST LU</h2>
+                    <button onclick="clearPlaylist()" class="text-xs text-gray-400 hover:text-white">Hapus</button>
+                </div>
+                <div id="sidebarPlaylist" class="flex flex-col gap-3"></div>
+            </div>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 bg-base md:m-2 md:rounded-lg overflow-y-auto relative pb-32">
-            
-            <!-- Header -->
             <header class="sticky top-0 bg-base/90 backdrop-blur-md z-30 flex justify-between items-center p-4">
                 <div class="flex items-center gap-2 md:hidden">
                     <svg class="w-8 h-8 text-spotify" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.3c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.9-9.3-1-.4.1-.7-.1-.8-.5-.1-.4.1-.7.5-.8 4-.9 7.5-.5 10.3 1.2.3.2.4.6.2.9zm1.2-2.7c-.2.4-.7.5-1.1.3-2.8-1.7-7.1-2.2-10.4-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.5-.6 11.7 1.4.4.2.5.7.3 1zm.1-2.8C14.5 8.9 8.6 8.7 5.1 9.8c-.5.2-1-.1-1.2-.6-.2-.5.1-1 .6-1.2 4-1.2 10.4-1 14.4 1.4.5.3.6.9.3 1.3-.3.5-.9.6-1.4.3z"/></svg>
@@ -104,7 +86,6 @@
                 <a href="/" class="ml-auto text-sm font-bold bg-white text-black px-4 py-1.5 rounded-full hover:scale-105 transition">Home</a>
             </header>
 
-            <!-- TAB HOME -->
             <div id="tab-home" class="p-4 md:p-6">
                 <h2 class="text-2xl font-bold mb-6">Selamat Datang!</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -115,7 +96,6 @@
                 </div>
             </div>
 
-            <!-- TAB SEARCH -->
             <div id="tab-search" class="hidden p-4 md:p-6">
                 <div class="relative mb-8 max-w-2xl">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -132,19 +112,15 @@
                 <div id="songList" class="flex flex-col gap-1"></div>
             </div>
 
-            <!-- TAB LIBRARY -->
             <div id="tab-library" class="hidden p-4 md:p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold">Playlist Lu</h2>
                     <button onclick="clearPlaylist()" class="text-sm text-gray-400 hover:text-white border border-gray-600 px-3 py-1 rounded-full">Hapus Semua</button>
                 </div>
-                <div id="mobileLibraryList" class="flex flex-col gap-2">
-                    <!-- Library items -->
-                </div>
+                <div id="mobileLibraryList" class="flex flex-col gap-2"></div>
             </div>
         </main>
 
-        <!-- NOW PLAYING VIEW (Full Screen Overlay) -->
         <div id="nowPlayingView" class="absolute inset-0 bg-[#121212] z-40 flex flex-col transform translate-y-full">
             <div class="flex items-center justify-between p-4">
                 <button onclick="closeNowPlaying()" class="text-white hover:scale-110 transition">
@@ -185,7 +161,6 @@
                         </div>
                     </div>
 
-                    <!-- Queue List -->
                     <div class="mt-4 w-full bg-[#181818] rounded-lg p-4 flex-1 flex flex-col max-h-[300px]">
                         <h3 class="text-sm font-bold text-gray-300 mb-4">Berikutnya di Antrean</h3>
                         <div id="queueList" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2"></div>
@@ -195,7 +170,6 @@
         </div>
     </div>
 
-    <!-- MINI PLAYER (Bawah) -->
     <div onclick="openNowPlaying()" class="fixed bottom-[60px] md:bottom-0 left-0 w-full bg-[#181818] border-t border-[#282828] px-4 py-2 flex items-center justify-between z-50 h-16 md:h-24 shrink-0 cursor-pointer hover:bg-[#282828] transition">
         <div class="flex items-center gap-3 w-3/4 md:w-1/4">
             <div class="w-10 h-10 md:w-14 md:h-14 rounded-md overflow-hidden shrink-0 bg-gray-800 relative">
@@ -216,7 +190,7 @@
         <div class="w-1/4 justify-end hidden md:flex"></div>
     </div>
 
-    <!-- BOTTOM NAV (Mobile Only) -->
+    <!-- BOTTOM NAV (Mobile) -->
     <nav class="fixed bottom-0 left-0 w-full bg-black border-t border-[#282828] h-[60px] flex md:hidden z-50">
         <button onclick="switchTab('home')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -237,7 +211,6 @@
     <script>
         const API_KEY = 'ov_382b386c1da4a353d64e9aae';
         const audio = document.getElementById('audioPlayer');
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
         let currentSong = null;
         let queue = []; 
@@ -264,7 +237,6 @@
             document.getElementById('nowPlayingView').classList.add('translate-y-full');
         }
 
-        // Render Playlist (Desktop Sidebar)
         function renderPlaylist() {
             const container = document.getElementById('sidebarPlaylist');
             if(!container) return;
@@ -288,7 +260,6 @@
             });
         }
 
-        // Render Playlist (Mobile Library Tab)
         function renderMobileLibrary() {
             const container = document.getElementById('mobileLibraryList');
             container.innerHTML = '';
@@ -344,6 +315,7 @@
             });
         }
 
+        // === PENCARIAN (PAKAI PIPED API BIAR CEPET) ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -359,30 +331,23 @@
             songList.innerHTML = '';
 
             try {
-                const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-                const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
-                const html = await res.text();
+                // PAKAI API PIPED YANG JAUH LEBIH CEPAT DARI SCRAPING HTML
+                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
+                const data = await res.json();
 
-                const match = html.match(/var ytInitialData = ({.*?});<\/script>/);
-                if (!match) throw new Error('Gagal parsing data.');
-
-                const ytData = JSON.parse(match[1]);
-                const contents = ytData.contents.twoColumnSearchResultsRenderer
-                    .primaryContents.sectionListRenderer.contents[0]
-                    .itemSectionRenderer.contents;
-
-                const results = contents.filter(c => c.videoRenderer).map(c => c.videoRenderer);
+                // Filter cuma ambil yang tipenya stream (lagu)
+                const results = data.items.filter(item => item.type === 'stream' && item.duration > 0);
 
                 loading.classList.add('hidden');
                 loading.classList.remove('flex');
 
                 const searchResults = [];
 
-                results.slice(0, 10).forEach((video) => {
-                    const title = video.title.runs[0].text;
-                    const channel = video.ownerText.runs[0].text;
-                    const duration = video.lengthText?.simpleText || '0:00';
-                    const thumbnail = `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
+                results.slice(0, 15).forEach((video) => {
+                    const title = video.title;
+                    const channel = video.uploaderName;
+                    const duration = formatDuration(video.duration); // Detik ke MM:SS
+                    const thumbnail = video.thumbnail;
                     
                     const songData = { title, author: channel, thumb: thumbnail };
                     searchResults.push(songData);
@@ -415,8 +380,10 @@
                 });
 
             } catch (err) {
+                console.error(err);
                 loading.classList.add('hidden');
                 loading.classList.remove('flex');
+                alert('Gagal mencari lagu: API Pencarian sedang sibuk.');
             }
         }, 500));
 
@@ -452,7 +419,7 @@
                 audio.src = audioUrl;
                 await audio.play();
 
-                renderQueue(); // Render antrean pas lagu mulai
+                renderQueue();
 
             } catch (err) {
                 console.error(err);
@@ -510,7 +477,6 @@
             }
         });
 
-        // Otomatis play lagu selanjutnya kalau lagu habis
         audio.addEventListener('ended', () => {
             const currentIndex = queue.findIndex(s => s.title === currentSong.title);
             const nextSong = queue[currentIndex + 1];
@@ -522,6 +488,13 @@
         function formatTime(seconds) {
             const m = Math.floor(seconds / 60);
             const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
