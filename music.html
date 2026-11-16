@@ -51,7 +51,8 @@
         <div class="max-w-2xl mx-auto p-3 flex items-center gap-4">
             <div class="w-14 h-14 border-2 border-black rounded-md overflow-hidden shrink-0 relative bg-black">
                 <img id="playerThumb" class="w-full h-full object-cover opacity-50" src="">
-                <div id="youtubePlayer" class="absolute inset-0 hidden"></div>
+                <!-- YouTube Player Tetap Ada di DOM, tapi ukurannya kecil banget -->
+                <div id="youtubePlayer" class="absolute top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"></div>
             </div>
             <div class="flex-1 overflow-hidden">
                 <h3 id="playerTitle" class="font-black text-sm truncate">Judul Lagu</h3>
@@ -68,15 +69,27 @@
         let player;
         let currentVideoId = '';
         let isPlaying = false;
+        let isPlayerReady = false;
 
-        // CORS Proxy buat nembus blokir browser
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtubePlayer', {
-                height: '56', width: '56', videoId: '',
-                playerVars: { 'autoplay': 0, 'controls': 0 },
-                events: { 'onStateChange': onPlayerStateChange }
+                height: '1', // Ukuran minimal
+                width: '1',
+                videoId: '',
+                playerVars: { 
+                    'autoplay': 0, 
+                    'controls': 0,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': () => { 
+                        isPlayerReady = true; 
+                        console.log('YouTube Player Ready!');
+                    },
+                    'onStateChange': onPlayerStateChange
+                }
             });
         }
 
@@ -90,7 +103,6 @@
             }
         }
 
-        // === FUNGSI PENCARIAN (VIA CORS PROXY) ===
         document.getElementById('searchBtn').addEventListener('click', async () => {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
@@ -105,23 +117,19 @@
             songList.innerHTML = '';
 
             try {
-                // Tembak YouTube Search via Proxy biar ga kena CORS
                 const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
                 const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
                 const html = await res.text();
 
-                // Ekstrak data JSON dari HTML YouTube (pakai regex)
                 const match = html.match(/var ytInitialData = ({.*?});<\/script>/);
                 if (!match) throw new Error('Gagal parsing data YouTube.');
 
                 const ytData = JSON.parse(match[1]);
                 
-                // Navigasi ke array hasil pencarian
                 const contents = ytData.contents.twoColumnSearchResultsRenderer
                     .primaryContents.sectionListRenderer.contents[0]
                     .itemSectionRenderer.contents;
 
-                // Filter cuma yang videoRenderer (video)
                 const results = contents
                     .filter(c => c.videoRenderer)
                     .map(c => c.videoRenderer);
@@ -167,16 +175,19 @@
         });
 
         function playSong(videoId, title, author, thumb) {
+            if (!isPlayerReady) {
+                alert("YouTube Player belum siap. Tunggu sebentar lagi lalu klik lagunya.");
+                return;
+            }
+
             const miniPlayer = document.getElementById('miniPlayer');
             document.getElementById('playerTitle').innerText = title;
             document.getElementById('playerAuthor').innerText = author;
             document.getElementById('playerThumb').src = thumb;
             miniPlayer.classList.remove('translate-y-full');
 
-            if (player && player.loadVideoById) {
-                player.loadVideoById(videoId);
-                currentVideoId = videoId;
-            }
+            currentVideoId = videoId;
+            player.loadVideoById(videoId);
         }
 
         document.getElementById('playBtn').addEventListener('click', () => {
