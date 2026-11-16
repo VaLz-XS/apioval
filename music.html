@@ -65,10 +65,12 @@
     </div>
 
     <script>
-        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; 
         let player;
         let currentVideoId = '';
         let isPlaying = false;
+
+        // CORS Proxy buat nembus blokir browser
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtubePlayer', {
@@ -88,7 +90,7 @@
             }
         }
 
-        // === FUNGSI PENCARIAN (Anti-CORS) ===
+        // === FUNGSI PENCARIAN (VIA CORS PROXY) ===
         document.getElementById('searchBtn').addEventListener('click', async () => {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
@@ -103,29 +105,38 @@
             songList.innerHTML = '';
 
             try {
-                // PAKAI API YOUTUBE SEARCH YANG SUPPORT CORS
-                const res = await fetch(`https://youtube-search-api.vercel.app/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
+                // Tembak YouTube Search via Proxy biar ga kena CORS
+                const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
+                const html = await res.text();
 
-                // API ini ngembaliin data.items (bentuknya array)
-                const results = data.items || [];
+                // Ekstrak data JSON dari HTML YouTube (pakai regex)
+                const match = html.match(/var ytInitialData = ({.*?});<\/script>/);
+                if (!match) throw new Error('Gagal parsing data YouTube.');
+
+                const ytData = JSON.parse(match[1]);
+                
+                // Navigasi ke array hasil pencarian
+                const contents = ytData.contents.twoColumnSearchResultsRenderer
+                    .primaryContents.sectionListRenderer.contents[0]
+                    .itemSectionRenderer.contents;
+
+                // Filter cuma yang videoRenderer (video)
+                const results = contents
+                    .filter(c => c.videoRenderer)
+                    .map(c => c.videoRenderer);
 
                 if (results.length === 0) throw new Error('Lagu tidak ditemukan.');
 
                 loading.classList.add('hidden');
                 songList.classList.remove('hidden');
 
-                results.slice(0, 10).forEach((song) => {
-                    // Ekstrak Video ID dari field 'id' (bisa string atau objek)
-                    let videoId = '';
-                    if (typeof song.id === 'string') videoId = song.id;
-                    else if (song.id && song.id.videoId) videoId = song.id.videoId;
-                    
-                    if (!videoId) return; // Skip kalau nggak ada ID
-
-                    // Format durasi (biasanya "MM:SS" dari API ini)
-                    const duration = song.length?.simpleText || song.duration || '0:00';
-                    const thumbnail = song.thumbnail?.thumbnails?.[0]?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+                results.slice(0, 10).forEach((video) => {
+                    const videoId = video.videoId;
+                    const title = video.title.runs[0].text;
+                    const channel = video.ownerText.runs[0].text;
+                    const duration = video.lengthText?.simpleText || '0:00';
+                    const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
                     const card = document.createElement('div');
                     card.className = 'brutal-box p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition';
@@ -136,14 +147,14 @@
                             <span class="absolute bottom-0 right-0 bg-black text-white text-[9px] font-bold px-1">${duration}</span>
                         </div>
                         <div class="flex-1 overflow-hidden">
-                            <h3 class="font-black text-sm leading-tight truncate">${song.title}</h3>
-                            <p class="text-xs font-bold text-gray-500 mt-1 truncate">${song.channelTitle || 'YouTube'}</p>
+                            <h3 class="font-black text-sm leading-tight truncate">${title}</h3>
+                            <p class="text-xs font-bold text-gray-500 mt-1 truncate">${channel}</p>
                         </div>
                         <div class="brutal-btn bg-yellow-300 w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0">▶</div>
                     `;
 
                     card.onclick = () => {
-                        playSong(videoId, song.title, song.channelTitle || 'YouTube', thumbnail);
+                        playSong(videoId, title, channel, thumbnail);
                     };
 
                     songList.appendChild(card);
