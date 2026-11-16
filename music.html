@@ -120,7 +120,6 @@
             </div>
         </main>
 
-        <!-- NOW PLAYING VIEW -->
         <div id="nowPlayingView" class="absolute inset-0 bg-[#121212] z-40 flex flex-col transform translate-y-full">
             <div class="flex items-center justify-between p-4">
                 <button onclick="closeNowPlaying()" class="text-white hover:scale-110 transition">
@@ -170,7 +169,6 @@
         </div>
     </div>
 
-    <!-- MINI PLAYER -->
     <div onclick="openNowPlaying()" class="fixed bottom-[60px] md:bottom-0 left-0 w-full bg-[#181818] border-t border-[#282828] px-4 py-2 flex items-center justify-between z-50 h-16 md:h-24 shrink-0 cursor-pointer hover:bg-[#282828] transition">
         <div class="flex items-center gap-3 w-3/4 md:w-1/4">
             <div class="w-10 h-10 md:w-14 md:h-14 rounded-md overflow-hidden shrink-0 bg-gray-800 relative">
@@ -191,7 +189,6 @@
         <div class="w-1/4 justify-end hidden md:flex"></div>
     </div>
 
-    <!-- BOTTOM NAV (Mobile) -->
     <nav class="fixed bottom-0 left-0 w-full bg-black border-t border-[#282828] h-[60px] flex md:hidden z-50">
         <button onclick="switchTab('home')" class="flex-1 flex flex-col items-center justify-center text-gray-400 hover:text-white transition">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -334,9 +331,9 @@
 
             let searchResults = [];
 
-            // 1. Coba cari di Spotify dulu (via endpoint /api/spotify-search)
+            // 1. Cari di Spotify (via endpoint action=search)
             try {
-                const resSpotify = await fetch(`https://apioval.vercel.app/api/spotify-search?q=${encodeURIComponent(query)}`);
+                const resSpotify = await fetch(`https://apioval.vercel.app/api/spotify?action=search&q=${encodeURIComponent(query)}`);
                 const dataSpotify = await resSpotify.json();
 
                 if (dataSpotify.ok && dataSpotify.results.length > 0) {
@@ -381,7 +378,7 @@
                 console.log('Gagal cari Spotify, coba YouTube...');
             }
 
-            // 2. Coba cari di YouTube (via CORS Proxy)
+            // 2. Cari di YouTube (via CORS Proxy)
             try {
                 const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
                 const resYt = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
@@ -472,7 +469,6 @@
                     audio.src = song.spotifyAudioUrl;
                     await audio.play();
                 } else if (song.type === 'spotify' && song.spotifyUrl) {
-                    // Kalau dari search, kita harus nembak /api/spotify dulu buat dapet link MP3-nya
                     const res = await fetch(`https://apioval.vercel.app/api/spotify?url=${encodeURIComponent(song.spotifyUrl)}`);
                     const data = await res.json();
                     
@@ -485,7 +481,6 @@
                     audio.src = audioDL.url;
                     await audio.play();
                 } else {
-                    // YouTube
                     const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(song.title)}&apikey=${API_KEY}`);
                     const data = await res.json();
 
@@ -508,7 +503,6 @@
             }
         }
 
-        // Event Audio
         document.getElementById('miniPlayBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (audio.paused) audio.play();
