@@ -3,163 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Player - OvalAPI</title>
+    <title>Oval Music - Spotify Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&display=swap');
+        
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #f0f0f0; padding-bottom: 100px; }
+        
         /* Tema Neo-Brutalism */
-        body { font-family: 'Space Grotesk', sans-serif; background-color: #f0f0f0; }
-        .brutal-box { border: 4px solid #000; box-shadow: 8px 8px 0px #000; background: #fff; }
-        .brutal-btn { border: 3px solid #000; box-shadow: 4px 4px 0px #000; transition: all 0.1s; }
-        .brutal-btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px #000; }
-        .brutal-input { border: 3px solid #000; box-shadow: 4px 4px 0px #000; }
+        .brutal-box { border: 4px solid #000; box-shadow: 6px 6px 0px #000; background: #fff; }
+        .brutal-btn { border: 3px solid #000; box-shadow: 3px 3px 0px #000; transition: all 0.1s; }
+        .brutal-btn:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px #000; }
+        .brutal-input { border: 3px solid #000; box-shadow: 3px 3px 0px #000; }
+        
+        /* Scrollbar Custom */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff; border-left: 2px solid #000; }
+        ::-webkit-scrollbar-thumb { background: #000; }
+        
+        /* Animasi */
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 3s linear infinite; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen">
 
-    <!-- Container Utama -->
-    <div class="w-full max-w-md brutal-box rounded-xl p-6 relative overflow-hidden">
+    <!-- Header -->
+    <header class="fixed top-0 w-full bg-yellow-400 border-b-4 border-black z-40 p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-black tracking-tighter">OVAL MUSIC 🎧</h1>
+        <a href="/" class="brutal-btn bg-white px-3 py-1 font-bold text-sm rounded">HOME</a>
+    </header>
+
+    <!-- Konten Utama (Padding atas biar ga ketutup header) -->
+    <main class="pt-24 px-4 max-w-2xl mx-auto">
         
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
-            <h1 class="text-2xl font-black tracking-tighter">OVAL MUSIC</h1>
-            <a href="/" class="brutal-btn bg-yellow-400 px-3 py-1 font-bold text-sm rounded">HOME</a>
-        </div>
-
         <!-- Search Bar -->
-        <div class="flex gap-2 mb-6">
-            <input type="text" id="searchInput" placeholder="Cari lagu..." class="brutal-input w-full px-4 py-2 text-sm rounded-lg focus:outline-none">
-            <button id="searchBtn" class="brutal-btn bg-green-400 px-4 py-2 font-bold rounded-lg">Cari</button>
+        <div class="flex gap-2 mb-8">
+            <input type="text" id="searchInput" placeholder="Cari lagu, artis, atau album..." class="brutal-input w-full px-4 py-3 text-sm font-bold rounded-lg focus:outline-none placeholder-gray-400">
+            <button id="searchBtn" class="brutal-btn bg-green-400 px-6 py-3 font-black text-lg rounded-lg">CARI</button>
         </div>
 
-        <!-- Loading Text -->
-        <div id="loading" class="hidden text-center font-bold text-sm mb-4 animate-pulse">Mencari lagu...</div>
-
-        <!-- Hasil Pencarian (List) -->
-        <div id="resultContainer" class="hidden max-h-60 overflow-y-auto mb-6 border-2 border-black rounded-lg">
-            <!-- Hasil list bakal masuk sini -->
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center font-bold text-lg mb-8">
+            <div class="inline-block animate-spin-slow text-2xl mb-2">💿</div>
+            <p>Mencari lagu...</p>
         </div>
 
-        <!-- Player Control -->
-        <div id="playerContainer" class="hidden">
-            <!-- Thumbnail -->
-            <div class="w-full h-48 border-4 border-black rounded-lg overflow-hidden mb-4 relative bg-gray-200">
-                <img id="thumbnail" class="w-full h-full object-cover" src="">
-                <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <div id="youtubePlayer"></div> <!-- YT Iframe di sini -->
-                </div>
-            </div>
-
-            <!-- Info -->
-            <div class="text-center mb-4">
-                <h3 id="title" class="font-black text-lg leading-tight truncate">Judul Lagu</h3>
-                <p id="author" class="text-sm font-bold text-gray-600 truncate">Channel</p>
-            </div>
-
-            <!-- Kontrol (Play/Pause/Stop) -->
-            <div class="flex justify-center gap-4">
-                <button id="playBtn" class="brutal-btn bg-blue-400 px-6 py-2 rounded-full font-bold">PLAY</button>
-                <button id="stopBtn" class="brutal-btn bg-red-400 px-6 py-2 rounded-full font-bold">STOP</button>
-            </div>
+        <!-- Daftar Lagu -->
+        <div id="songList" class="hidden space-y-4">
+            <!-- Card lagu bakal masuk sini -->
         </div>
 
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center mt-20 text-gray-400">
+            <div class="text-6xl mb-4">🎵</div>
+            <h2 class="text-xl font-black text-gray-600">Belum ada lagu</h2>
+            <p class="font-bold text-sm mt-2">Cari lagu favorit lu di atas!</p>
+        </div>
+
+    </main>
+
+    <!-- Mini Player (Fixed di bawah) -->
+    <div id="miniPlayer" class="fixed bottom-0 left-0 w-full bg-white border-t-4 border-black z-50 transform translate-y-full transition-transform duration-300">
+        <div class="max-w-2xl mx-auto p-3 flex items-center gap-4">
+            
+            <!-- Thumbnail & YT Player (Hidden) -->
+            <div class="w-14 h-14 border-2 border-black rounded-md overflow-hidden shrink-0 relative bg-black">
+                <img id="playerThumb" class="w-full h-full object-cover opacity-50" src="">
+                <div id="youtubePlayer" class="absolute inset-0 hidden"></div>
+            </div>
+            
+            <!-- Info Lagu -->
+            <div class="flex-1 overflow-hidden">
+                <h3 id="playerTitle" class="font-black text-sm truncate">Judul Lagu</h3>
+                <p id="playerAuthor" class="text-xs font-bold text-gray-500 truncate">Artis</p>
+            </div>
+
+            <!-- Kontrol -->
+            <div class="flex items-center gap-2">
+                <button id="playBtn" class="brutal-btn bg-blue-400 w-10 h-10 rounded-full flex items-center justify-center text-lg">▶</button>
+                <button id="stopBtn" class="brutal-btn bg-red-400 w-10 h-10 rounded-full flex items-center justify-center text-lg">⏹</button>
+            </div>
+        </div>
     </div>
 
     <script>
         // === KONFIGURASI ===
-        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; // Ganti kalau perlu
+        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; 
         let player;
         let currentVideoId = '';
+        let isPlaying = false;
 
-        // Setup YouTube API
+        // Setup YouTube API (Hidden Player)
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtubePlayer', {
-                height: '100%',
-                width: '100%',
+                height: '56',
+                width: '56',
                 videoId: '',
-                playerVars: { 'autoplay': 0, 'controls': 0, 'origin': window.location.origin },
-                events: { 'onReady': onPlayerReady }
-            });
-        }
-
-        function onPlayerReady(event) {
-            document.getElementById('playBtn').addEventListener('click', () => {
-                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-                    player.pauseVideo();
-                    document.getElementById('playBtn').innerText = 'PLAY';
-                } else {
-                    player.playVideo();
-                    document.getElementById('playBtn').innerText = 'PAUSE';
+                playerVars: { 'autoplay': 0, 'controls': 0 },
+                events: {
+                    'onStateChange': onPlayerStateChange
                 }
             });
-
-            document.getElementById('stopBtn').addEventListener('click', () => {
-                player.stopVideo();
-                document.getElementById('playBtn').innerText = 'PLAY';
-            });
         }
 
-        // === FUNGSI PENCARIAN ===
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                document.getElementById('playBtn').innerText = '⏸';
+                isPlaying = true;
+            } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                document.getElementById('playBtn').innerText = '▶';
+                isPlaying = false;
+            }
+        }
+
+        // === FUNGSI PENCARIAN (Ambil List Lagu) ===
         document.getElementById('searchBtn').addEventListener('click', async () => {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
 
             const loading = document.getElementById('loading');
-            const resultContainer = document.getElementById('resultContainer');
-            const playerContainer = document.getElementById('playerContainer');
+            const songList = document.getElementById('songList');
+            const emptyState = document.getElementById('emptyState');
 
             loading.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            playerContainer.classList.add('hidden');
+            songList.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            songList.innerHTML = ''; // Reset list
 
             try {
-                // Panggil API Oval lu
-                const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(query)}&apikey=${API_KEY}`);
+                // Kita pakai API Piped (Frontend publik) buat dapet LIST pencarian
+                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
                 const data = await res.json();
 
-                if (!data.ok) throw new Error(data.error);
+                // Filter cuma ambil yang tipenya stream (lagu/video)
+                const results = data.items.filter(item => item.type === 'stream' && item.duration > 0);
 
-                // Sembunyiin loading
+                if (results.length === 0) {
+                    throw new Error('Lagu tidak ditemukan.');
+                }
+
                 loading.classList.add('hidden');
-                
-                // Tampilin Player
-                playerContainer.classList.remove('hidden');
-                
-                // Isi Data
-                document.getElementById('title').innerText = data.title;
-                document.getElementById('author').innerText = data.author;
-                document.getElementById('thumbnail').src = data.thumbnail;
+                songList.classList.remove('hidden');
 
-                // Ekstrak Video ID dari URL video (buat Youtube IFrame)
-                // Asumsi API lu ngasih link youtube, kita extract ID-nya
-                const ytLink = data.video || data.url; 
-                let videoId = '';
-                if (ytLink) {
-                    const match = ytLink.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-                    videoId = match ? match[1] : '';
-                }
+                // Loop hasil pencarian & bikin Card
+                results.slice(0, 10).forEach((song) => {
+                    // Ekstrak ID dari URL Piped (biasanya /watch?v=XXXX)
+                    const videoId = song.url.split('?v=')[1];
+                    
+                    // Bikin elemen Card
+                    const card = document.createElement('div');
+                    card.className = 'brutal-box p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition';
+                    
+                    card.innerHTML = `
+                        <div class="w-16 h-16 border-2 border-black rounded overflow-hidden shrink-0 relative">
+                            <img src="${song.thumbnail}" class="w-full h-full object-cover">
+                            <span class="absolute bottom-0 right-0 bg-black text-white text-[9px] font-bold px-1">${formatDuration(song.duration)}</span>
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <h3 class="font-black text-sm leading-tight truncate">${song.title}</h3>
+                            <p class="text-xs font-bold text-gray-500 mt-1 truncate">${song.uploaderName}</p>
+                        </div>
+                        <div class="brutal-btn bg-yellow-300 w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0">▶</div>
+                    `;
 
-                if (!videoId) {
-                    alert("Gagal menemukan ID video YouTube. Coba lagu lain.");
-                    return;
-                }
+                    // Pas diklik, puter lagu
+                    card.onclick = () => {
+                        playSong(videoId, song.title, song.uploaderName, song.thumbnail);
+                    };
 
-                currentVideoId = videoId;
-
-                // Load Video ke player
-                if (player && player.loadVideoById) {
-                    player.loadVideoById(currentVideoId);
-                    // Autoplay setelah load
-                    setTimeout(() => {
-                        player.playVideo();
-                        document.getElementById('playBtn').innerText = 'PAUSE';
-                    }, 1500);
-                }
+                    songList.appendChild(card);
+                });
 
             } catch (err) {
                 loading.classList.add('hidden');
-                alert('Gagal: ' + err.message);
+                alert('Gagal mencari lagu: ' + err.message);
             }
+        });
+
+        // === FUNGSI PLAYER ===
+        function playSong(videoId, title, author, thumb) {
+            const miniPlayer = document.getElementById('miniPlayer');
+            
+            // Update UI Player Bawah
+            document.getElementById('playerTitle').innerText = title;
+            document.getElementById('playerAuthor').innerText = author;
+            document.getElementById('playerThumb').src = thumb;
+            
+            // Tampilkan Player
+            miniPlayer.classList.remove('translate-y-full');
+
+            // Load Video ke IFrame API
+            if (player && player.loadVideoById) {
+                player.loadVideoById(videoId);
+                currentVideoId = videoId;
+            }
+        }
+
+        // === TOMBOL KONTROL ===
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (!player || !currentVideoId) return;
+            if (isPlaying) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            if (!player) return;
+            player.stopVideo();
+            document.getElementById('miniPlayer').classList.add('translate-y-full');
+            currentVideoId = '';
+        });
+
+        // === HELPER: FORMAT DURASI (Detik -> MM:SS) ===
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Enter key buat search
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('searchBtn').click();
         });
 
     </script>
