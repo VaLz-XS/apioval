@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player - OvalAPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        /* Tema Neo-Brutalism */
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #f0f0f0; }
+        .brutal-box { border: 4px solid #000; box-shadow: 8px 8px 0px #000; background: #fff; }
+        .brutal-btn { border: 3px solid #000; box-shadow: 4px 4px 0px #000; transition: all 0.1s; }
+        .brutal-btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px #000; }
+        .brutal-input { border: 3px solid #000; box-shadow: 4px 4px 0px #000; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Container Utama -->
+    <div class="w-full max-w-md brutal-box rounded-xl p-6 relative overflow-hidden">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
+            <h1 class="text-2xl font-black tracking-tighter">OVAL MUSIC</h1>
+            <a href="/" class="brutal-btn bg-yellow-400 px-3 py-1 font-bold text-sm rounded">HOME</a>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex gap-2 mb-6">
+            <input type="text" id="searchInput" placeholder="Cari lagu..." class="brutal-input w-full px-4 py-2 text-sm rounded-lg focus:outline-none">
+            <button id="searchBtn" class="brutal-btn bg-green-400 px-4 py-2 font-bold rounded-lg">Cari</button>
+        </div>
+
+        <!-- Loading Text -->
+        <div id="loading" class="hidden text-center font-bold text-sm mb-4 animate-pulse">Mencari lagu...</div>
+
+        <!-- Hasil Pencarian (List) -->
+        <div id="resultContainer" class="hidden max-h-60 overflow-y-auto mb-6 border-2 border-black rounded-lg">
+            <!-- Hasil list bakal masuk sini -->
+        </div>
+
+        <!-- Player Control -->
+        <div id="playerContainer" class="hidden">
+            <!-- Thumbnail -->
+            <div class="w-full h-48 border-4 border-black rounded-lg overflow-hidden mb-4 relative bg-gray-200">
+                <img id="thumbnail" class="w-full h-full object-cover" src="">
+                <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <div id="youtubePlayer"></div> <!-- YT Iframe di sini -->
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="text-center mb-4">
+                <h3 id="title" class="font-black text-lg leading-tight truncate">Judul Lagu</h3>
+                <p id="author" class="text-sm font-bold text-gray-600 truncate">Channel</p>
+            </div>
+
+            <!-- Kontrol (Play/Pause/Stop) -->
+            <div class="flex justify-center gap-4">
+                <button id="playBtn" class="brutal-btn bg-blue-400 px-6 py-2 rounded-full font-bold">PLAY</button>
+                <button id="stopBtn" class="brutal-btn bg-red-400 px-6 py-2 rounded-full font-bold">STOP</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // === KONFIGURASI ===
+        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; // Ganti kalau perlu
+        let player;
+        let currentVideoId = '';
+
+        // Setup YouTube API
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtubePlayer', {
+                height: '100%',
+                width: '100%',
+                videoId: '',
+                playerVars: { 'autoplay': 0, 'controls': 0, 'origin': window.location.origin },
+                events: { 'onReady': onPlayerReady }
+            });
+        }
+
+        function onPlayerReady(event) {
+            document.getElementById('playBtn').addEventListener('click', () => {
+                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    player.pauseVideo();
+                    document.getElementById('playBtn').innerText = 'PLAY';
+                } else {
+                    player.playVideo();
+                    document.getElementById('playBtn').innerText = 'PAUSE';
+                }
+            });
+
+            document.getElementById('stopBtn').addEventListener('click', () => {
+                player.stopVideo();
+                document.getElementById('playBtn').innerText = 'PLAY';
+            });
+        }
+
+        // === FUNGSI PENCARIAN ===
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('resultContainer');
+            const playerContainer = document.getElementById('playerContainer');
+
+            loading.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            playerContainer.classList.add('hidden');
+
+            try {
+                // Panggil API Oval lu
+                const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(query)}&apikey=${API_KEY}`);
+                const data = await res.json();
+
+                if (!data.ok) throw new Error(data.error);
+
+                // Sembunyiin loading
+                loading.classList.add('hidden');
+                
+                // Tampilin Player
+                playerContainer.classList.remove('hidden');
+                
+                // Isi Data
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('author').innerText = data.author;
+                document.getElementById('thumbnail').src = data.thumbnail;
+
+                // Ekstrak Video ID dari URL video (buat Youtube IFrame)
+                // Asumsi API lu ngasih link youtube, kita extract ID-nya
+                const ytLink = data.video || data.url; 
+                let videoId = '';
+                if (ytLink) {
+                    const match = ytLink.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                    videoId = match ? match[1] : '';
+                }
+
+                if (!videoId) {
+                    alert("Gagal menemukan ID video YouTube. Coba lagu lain.");
+                    return;
+                }
+
+                currentVideoId = videoId;
+
+                // Load Video ke player
+                if (player && player.loadVideoById) {
+                    player.loadVideoById(currentVideoId);
+                    // Autoplay setelah load
+                    setTimeout(() => {
+                        player.playVideo();
+                        document.getElementById('playBtn').innerText = 'PAUSE';
+                    }, 1500);
+                }
+
+            } catch (err) {
+                loading.classList.add('hidden');
+                alert('Gagal: ' + err.message);
+            }
+        });
+
+    </script>
+</body>
+</html>
