@@ -100,12 +100,12 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                     </div>
-                    <input type="text" id="searchInput" placeholder="Apa yang ingin kamu putar?" class="w-full bg-white text-black placeholder-gray-500 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white transition shadow-lg font-medium">
+                    <input type="text" id="searchInput" placeholder="Ketik judul lagu atau artis..." class="w-full bg-white text-black placeholder-gray-500 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white transition shadow-lg font-medium">
                 </div>
 
                 <div id="loading" class="hidden flex-col items-center justify-center py-10">
                     <svg class="animate-spin h-8 w-8 text-spotify mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <p class="text-sm text-gray-400 font-medium">Mencari lagu...</p>
+                    <p class="text-sm text-gray-400 font-medium">Mencari...</p>
                 </div>
 
                 <div id="songList" class="flex flex-col gap-1"></div>
@@ -215,14 +215,6 @@
         let queue = []; 
         let playlist = JSON.parse(localStorage.getItem('oval_playlist')) || [];
 
-        // Daftar server Invidious buat fallback (kalau satu down, pindah ke yang lain)
-        const INVIDIOUS_SERVERS = [
-            'https://inv.tux.pizza',
-            'https://vid.puffyan.us',
-            'https://invidious.io',
-            'https://invidious.snopyta.org'
-        ];
-
         function switchTab(tab) {
             document.getElementById('tab-home').classList.add('hidden');
             document.getElementById('tab-search').classList.add('hidden');
@@ -322,7 +314,7 @@
             });
         }
 
-        // === FUNGSI PENCARIAN DENGAN FALLBACK SERVER ===
+        // === PENCARIAN SUPER CEPAT (PAKAI AUTOCOMPLETE API) ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -337,73 +329,63 @@
             loading.classList.add('flex');
             songList.innerHTML = '';
 
-            let success = false;
+            try {
+                // Pakai YouTube Autocomplete API (super cepat & support CORS)
+                const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                // data[1] isinya array string (judul lagu)
+                const suggestions = data[1] || [];
 
-            // Coba satu per satu server Invidious sampai ada yang berhasil
-            for (const server of INVIDIOUS_SERVERS) {
-                try {
-                    const res = await fetch(`${server}/api/v1/search?q=${encodeURIComponent(query)}&type=video`);
-                    if (!res.ok) throw new Error('Server error');
-                    
-                    const data = await res.json();
-                    
-                    if (data.length === 0) throw new Error('No results');
-
+                if (suggestions.length === 0) {
                     loading.classList.add('hidden');
                     loading.classList.remove('flex');
-
-                    const searchResults = [];
-
-                    data.slice(0, 15).forEach((video) => {
-                        const title = video.title;
-                        const channel = video.author;
-                        const duration = formatDuration(video.lengthSeconds);
-                        const thumbnail = video.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
-                        
-                        const songData = { title, author: channel, thumb: thumbnail };
-                        searchResults.push(songData);
-
-                        const card = document.createElement('div');
-                        card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
-                        card.innerHTML = `
-                            <div class="text-gray-400 w-4 text-center text-sm opacity-0 group-hover:opacity-100">▶</div>
-                            <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative">
-                                <img src="${thumbnail}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <h3 class="font-bold text-sm text-white truncate">${title}</h3>
-                                <p class="text-xs text-gray-400 mt-1 truncate">${channel}</p>
-                            </div>
-                            <div class="text-xs text-gray-400 px-2">${duration}</div>
-                        `;
-
-                        card.onclick = () => {
-                            playSong(songData, searchResults);
-                            if (!playlist.some(s => s.title === title)) {
-                                playlist.unshift(songData);
-                                if (playlist.length > 20) playlist.pop();
-                                localStorage.setItem('oval_playlist', JSON.stringify(playlist));
-                                renderPlaylist();
-                                renderMobileLibrary();
-                            }
-                        };
-                        songList.appendChild(card);
-                    });
-
-                    success = true;
-                    break; // Berhenti kalau udah dapet hasil
-
-                } catch (err) {
-                    console.log(`Server ${server} gagal, coba server lain...`);
+                    return;
                 }
-            }
 
-            if (!success) {
                 loading.classList.add('hidden');
                 loading.classList.remove('flex');
-                alert('Semua server pencarian sedang sibuk. Coba lagi nanti.');
-            }
 
+                const searchResults = [];
+
+                // Ambil 10 saran teratas
+                suggestions.slice(0, 10).forEach((title, index) => {
+                    const dummyThumb = `https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg`; // Placeholder gambar
+                    
+                    const songData = { title: title, author: 'YouTube Music', thumb: dummyThumb };
+                    searchResults.push(songData);
+
+                    const card = document.createElement('div');
+                    card.className = 'flex items-center gap-4 p-2 rounded-md hover:bg-hover transition cursor-pointer group';
+                    card.innerHTML = `
+                        <div class="text-gray-400 w-4 text-center text-sm opacity-0 group-hover:opacity-100">▶</div>
+                        <div class="w-12 h-12 rounded overflow-hidden shrink-0 relative bg-gray-700 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <h3 class="font-bold text-sm text-white truncate">${title}</h3>
+                            <p class="text-xs text-gray-400 mt-1 truncate">Hasil Saran</p>
+                        </div>
+                    `;
+
+                    card.onclick = () => {
+                        playSong(songData, searchResults);
+                        if (!playlist.some(s => s.title === title)) {
+                            playlist.unshift(songData);
+                            if (playlist.length > 20) playlist.pop();
+                            localStorage.setItem('oval_playlist', JSON.stringify(playlist));
+                            renderPlaylist();
+                            renderMobileLibrary();
+                        }
+                    };
+                    songList.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error(err);
+                loading.classList.add('hidden');
+                loading.classList.remove('flex');
+            }
         }, 500));
 
         async function playSong(song, currentQueue) {
