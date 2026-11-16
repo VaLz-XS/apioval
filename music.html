@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Oval Music - Spotify Clone (Fast)</title>
+    <title>Oval Music - Spotify Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
@@ -125,12 +125,13 @@
     <audio id="audioPlayer"></audio>
 
     <script>
+        const API_KEY = 'ov_382b386c1da4a353d64e9aae'; // API KEY OVAL LU
         let currentVideoId = '';
-        let isPlaying = false;
         
         const audio = document.getElementById('audioPlayer');
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
+        // === PENCARIAN (YouTube Scraping) ===
         document.getElementById('searchInput').addEventListener('input', debounce(async (e) => {
             const query = e.target.value.trim();
             if (!query) {
@@ -195,7 +196,8 @@
                         </div>
                     `;
 
-                    card.onclick = () => playSong(videoId, title, channel, thumbnail);
+                    // Kirim Judul ke fungsi playSong
+                    card.onclick = () => playSong(title, channel, thumbnail);
                     songList.appendChild(card);
                 });
 
@@ -205,8 +207,8 @@
             }
         }, 500));
 
-        // === PLAY LAGU (COBALT API) ===
-        async function playSong(videoId, title, author, thumb) {
+        // === PLAY LAGU (PAKAI API OVAL LU) ===
+        async function playSong(title, author, thumb) {
             const miniPlayer = document.getElementById('miniPlayer');
             const iconPlay = document.getElementById('iconPlay');
             const iconPause = document.getElementById('iconPause');
@@ -221,34 +223,19 @@
             iconPause.classList.add('hidden');
             iconLoading.classList.remove('hidden');
 
-            currentVideoId = videoId;
-
             try {
-                // PAKAI COBALT API BUAT NGAMBIL LINK AUDIO
-                const cobaltUrl = 'https://api.cobalt.tools/';
-                const res = await fetch(cobaltUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        url: `https://www.youtube.com/watch?v=${videoId}`,
-                        downloadMode: 'audio',
-                        audioFormat: 'mp3'
-                    })
-                });
-
+                // TEMBAK API OVAL LU (Bukan API publik lagi)
+                const res = await fetch(`https://apioval.vercel.app/api/play?q=${encodeURIComponent(title)}&apikey=${API_KEY}`);
                 const data = await res.json();
 
-                if (data.status === 'error') {
-                    throw new Error(data.error?.code || 'Gagal ambil audio dari Cobalt');
-                }
+                if (!data.ok) throw new Error(data.error || 'Gagal ambil data dari OvalAPI');
 
-                // Cobalt ngasih link audio (bisa direct atau tunnel)
-                const audioUrl = data.url || data.audio;
-                if (!audioUrl) throw new Error('Link audio tidak ditemukan.');
+                // API Oval lu ngasih link video/audio. Kita coba ambil yang audio.
+                // Kalau data.video nggak ada, coba data.audio atau data.url
+                const audioUrl = data.audio || data.video || data.url;
+                if (!audioUrl) throw new Error('Link audio tidak ditemukan dari API.');
 
+                // Set source dan play
                 audio.src = audioUrl;
                 await audio.play();
 
@@ -276,7 +263,6 @@
             document.getElementById('playerThumb').classList.remove('animate-spin-slow');
             document.getElementById('iconPlay').classList.remove('hidden');
             document.getElementById('iconPause').classList.add('hidden');
-            currentVideoId = '';
         });
 
         audio.addEventListener('play', () => {
